@@ -23,13 +23,8 @@ def build_transaction():
     sender_address = Address.from_primitive(SENDER)
     receiver_address = Address.from_primitive(RECEIVER)
 
-
-
-    # Fetch UTXOs for the sender address
-    utxos = context.utxos(str(SENDER))
-
     builder = TransactionBuilder(context)
-    builder.add_input(utxos[12])
+    builder.add_input_address(sender_address)
     builder.add_output(TransactionOutput(receiver_address, amount_to_send))  # 2 ADA
 
     unsigned_tx_body = builder.build()  # Build the transaction body
