@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gửi ADA bằng Eternl</title>
+</head>
+<body>
+  <h2>Gửi ADA với Eternl</h2>
+  <button onclick="sendTransaction()">Gửi giao dịch</button>
+
+  <script>
+    async function sendTransaction() {
+      try {
+        // Gọi Flask để lấy unsigned tx
+        const res = await fetch("/build_tx");
+        const data = await res.json();
+        const cborHex = data.cbor_hex;
+
+        if (!window.cardano || !window.cardano.eternl) {
+          alert("Không tìm thấy ví Eternl.");
+          return;
+        }
+
+        const api = await window.cardano.eternl.enable();
+        const signedTx = await api.signTx(cborHex, true);
+        const txHash = await api.submitTx(signedTx);
+
+        alert("Thành công! Transaction hash:\n" + txHash);
+      } catch (err) {
+        console.error(err);
+        alert("Lỗi: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
