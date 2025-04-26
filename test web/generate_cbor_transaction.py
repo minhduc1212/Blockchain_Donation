@@ -1,68 +1,65 @@
-import os
 from pycardano import (
     TransactionBody, TransactionInput, TransactionId, TransactionOutput,
-    Address, Network, Transaction, TransactionWitnessSet, BlockFrostChainContext,
-    Value # Import thêm Value để xử lý số lượng Lovelace
+    Address, Transaction, TransactionWitnessSet, BlockFrostChainContext,
+    Value  # Import Value to handle Lovelace amounts
 )
 
-# --- !!! THAY THẾ CÁC GIÁ TRỊ PLACEHOLDER SAU !!! ---
-# Lấy Project ID từ Blockfrost.io (đăng ký miễn phí)
-# Bạn có thể đặt nó làm biến môi trường hoặc thay trực tiếp vào chuỗi
-blockfrost_project_id = os.environ.get("BLOCKFROST_PROJECT_ID", "YOUR_BLOCKFROST_PROJECT_ID")
+# --- Replace Placeholder Values ---
+# Blockfrost Project ID (register for free at Blockfrost.io)
+BLOCKFROST_PROJECT_ID = "previewJhNPT5QxoI6h2TujleChtJ7qTxNZqSAZ"
+NETWORK = "https://cardano-preview.blockfrost.io/api/"
 
-# ID của giao dịch chứa UTXO bạn muốn dùng làm đầu vào
-input_tx_id_hex = "YOUR_INPUT_TX_ID_HEX" # Ví dụ: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-input_tx_index = 0  # Chỉ số của UTXO trong giao dịch đó (thường là 0 hoặc 1)
+context = BlockFrostChainContext(BLOCKFROST_PROJECT_ID, base_url=NETWORK)
 
-# Số lượng Lovelace chính xác trong UTXO đầu vào của bạn
-input_amount_lovelace = 10000000 # Ví dụ: 10 ADA = 10,000,000 Lovelace (BẠN PHẢI THAY BẰNG GIÁ TRỊ THỰC)
+# Sender and receiver addresses
+sender_address = "addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj"
+receiver_address = "addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj"
 
-# Địa chỉ của bạn (để nhận tiền thừa - change)
-# Sử dụng địa chỉ testnet từ ví dụ trước
-my_address_bech32 = "addr_test1vrm9x2zsux7va6w892g38tvchnzahvcd9tykqf3ygnmwtaqyfg52x"
+# Transaction input details
+input_tx_id_hex = "c21db19ce16e5f3e77c8b086e07077859378b8564cc7ffb3c7d30114950c17e9"
+input_tx_index = 1
 
-# Địa chỉ người nhận
-recipient_address_bech32 = "addr_test1vr3g6va7t5k2seu4m5kwk7a6u3e4fx0j6sw3k4k5h6ry64g2l2kzp" # Ví dụ địa chỉ nhận
-
-# Số tiền muốn gửi (ví dụ: 2 ADA)
-send_amount_lovelace = 2000000
-
-# Phí giao dịch ước tính (bạn có thể tính toán chính xác hơn bằng builder)
-# Hoặc đặt một giá trị đủ lớn (ví dụ: 0.2 ADA)
-fee_lovelace = 170000 # Ví dụ: 0.17 ADA
-# --- !!! KẾT THÚC PHẦN THAY THẾ !!! ---
-
-# --- Thiết lập ngữ cảnh mạng và BlockFrost ---
-network = Network.TESTNET # Hoặc Network.MAINNET
-context = BlockFrostChainContext(project_id=blockfrost_project_id, base_url=network.blockfrost_url)
-
-# --- Tạo đối tượng Địa chỉ ---
-try:
-    my_address = Address.from_primitive(my_address_bech32)
-    recipient_address = Address.from_primitive(recipient_address_bech32)
-except Exception as e:
-    print(f"Lỗi giải mã địa chỉ: {e}")
+# Fetch UTXOs for the sender address
+"""utxos = context.utxos(str(sender_address))
+if not utxos:
+    print(f"ERROR: No UTXOs found for address {sender_address}.")
+    print(f"Please fund this address on the testnet network.")
     exit()
 
-# --- Tạo đối tượng Đầu vào (Input) ---
+print(f"Found {len(utxos)} UTXO(s).")
+total = sum(utxo.output.amount.coin for utxo in utxos)
+print(f"Total ADA balance: {sum / 1_000_000} ADA ({sum} lovelace)")"""
+
+input_amount_lovelace = 9639141629
+
+# Amount to send and estimated fee
+send_amount_lovelace = 2_000_000
+fee_lovelace = 170_000
+
+# Create address objects
+try:
+    my_address = Address.from_primitive(sender_address)
+    recipient_address = Address.from_primitive(receiver_address)
+except Exception as e:
+    print(f"Error decoding address: {e}")
+    exit()
+
+# Create transaction input
 tx_id = TransactionId(bytes.fromhex(input_tx_id_hex))
 tx_in = TransactionInput(transaction_id=tx_id, index=input_tx_index)
 
-# --- Tạo đối tượng Đầu ra (Output) ---
-# 1. Đầu ra cho người nhận
+# Create transaction outputs
 output_send = TransactionOutput(
     address=recipient_address,
-    amount=Value(coin=send_amount_lovelace) # Sử dụng Value để chỉ định Lovelace
+    amount=Value(coin=send_amount_lovelace)
 )
 
-# 2. Tính toán và tạo đầu ra trả lại (Change)
 change_amount_lovelace = input_amount_lovelace - send_amount_lovelace - fee_lovelace
-
 if change_amount_lovelace < 0:
-    print(f"Lỗi: Số dư đầu vào ({input_amount_lovelace}) không đủ để gửi ({send_amount_lovelace}) và trả phí ({fee_lovelace}).")
+    print(f"Error: Insufficient balance ({input_amount_lovelace}) to send ({send_amount_lovelace}) and cover fees ({fee_lovelace}).")
     exit()
 elif change_amount_lovelace == 0:
-    print("Cảnh báo: Không có tiền thừa trả lại.")
+    print("Warning: No change will be returned.")
     outputs = [output_send]
 else:
     output_change = TransactionOutput(
@@ -70,60 +67,50 @@ else:
         amount=Value(coin=change_amount_lovelace)
     )
     outputs = [output_send, output_change]
-    print(f"Đầu vào: {input_amount_lovelace / 1000000} ADA")
-    print(f"Gửi đi: {send_amount_lovelace / 1000000} ADA")
-    print(f"Phí: {fee_lovelace / 1000000} ADA")
-    print(f"Trả lại: {change_amount_lovelace / 1000000} ADA")
+    print(f"Input: {input_amount_lovelace / 1_000_000} ADA")
+    print(f"Sending: {send_amount_lovelace / 1_000_000} ADA")
+    print(f"Fee: {fee_lovelace / 1_000_000} ADA")
+    print(f"Change: {change_amount_lovelace / 1_000_000} ADA")
 
-
-# --- Lấy Slot hiện tại và tính TTL ---
+# Get current slot and calculate TTL
 try:
     current_slot = context.last_block_slot
-    # Đặt TTL khoảng 2 giờ (7200 giây / giây mỗi slot ~ 1 => khoảng 7200 slot)
-    ttl = current_slot + 7200
-    print(f"Slot hiện tại: {current_slot}")
+    ttl = current_slot + 7200  # TTL set to ~2 hours
+    print(f"Current slot: {current_slot}")
     print(f"TTL (Invalid Hereafter): {ttl}")
 except Exception as e:
-    print(f"Lỗi khi lấy slot hiện tại từ BlockFrost: {e}")
-    print("Sử dụng TTL mặc định (có thể không hợp lệ).")
-    ttl = 100000000 # Đặt một giá trị lớn tạm thời nếu không lấy được
+    print(f"Error fetching current slot from BlockFrost: {e}")
+    ttl = 100_000_000  # Default TTL if unable to fetch
 
-# --- Tạo Thân Giao dịch (Transaction Body) ---
+# Create transaction body
 tx_body = TransactionBody(
     inputs=[tx_in],
     outputs=outputs,
     fee=fee_lovelace,
-    ttl=ttl,
-    network=network # Chỉ định mạng rõ ràng hơn
+    ttl=ttl
 )
 
-# --- Tạo Tập hợp Bằng chứng (Witness Set - rỗng vì chưa ký) ---
-# Đây là cấu trúc cần thiết, chữ ký sẽ được thêm vào sau
+# Create an empty witness set
 witness_set = TransactionWitnessSet()
 
-# --- Tạo Giao dịch Hoàn chỉnh (Kết hợp Body và Witness Set) ---
+# Create the complete transaction
 transaction = Transaction(
     transaction_body=tx_body,
     transaction_witness_set=witness_set,
-    auxiliary_data=None # Không có metadata trong ví dụ này
+    auxiliary_data=None
 )
 
-# --- Tuần tự hóa Giao dịch thành CBOR Hex ---
+# Serialize transaction to CBOR hex
 cbor_hex = transaction.to_cbor_hex()
 
-# --- In kết quả ---
+# Print results
 print("\n--- Transaction Object (Python) ---")
 print(transaction)
 
-print("\n--- Raw Transaction CBOR (Hex - Chưa ký) ---")
+print("\n--- Raw Transaction CBOR (Hex - Unsigned) ---")
 print(cbor_hex)
 
-print("\n--- Hướng dẫn tiếp theo ---")
-print("1. Lưu CBOR hex này vào một file (ví dụ: tx.raw.cborhex).")
-print("2. Sử dụng cardano-cli hoặc thư viện khác để KÝ (sign) giao dịch này bằng khóa riêng tư tương ứng với địa chỉ đầu vào.")
-print("   Ví dụ cardano-cli:")
-print(f"   cardano-cli transaction sign --tx-body-file <file_chứa_body_cbor> --signing-key-file <file_skey> --{network.cli_param[1:]} --out-file tx.signed")
-print("   (Lưu ý: Cần trích xuất phần body CBOR từ CBOR giao dịch hoàn chỉnh ở trên nếu dùng cardano-cli)")
-print("   HOẶC dùng phương thức ký của PyCardano nếu có signing key object.")
-print("3. GỬI (submit) file giao dịch đã ký (tx.signed) lên mạng Cardano.")
-print(f"   cardano-cli transaction submit --tx-file tx.signed --{network.cli_param[1:]}")
+print("\n--- Next Steps ---")
+print("1. Save this CBOR hex to a file (e.g., tx.raw.cborhex).")
+print("2. Use cardano-cli or another library to SIGN this transaction with the private key corresponding to the input address.")
+print("3. Submit the signed transaction to the Cardano network.")
