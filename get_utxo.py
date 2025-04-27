@@ -2,7 +2,9 @@ from pycardano import (
     Address,
     BlockFrostChainContext
 )
- 
+
+
+utxo_s = []
 context = BlockFrostChainContext(
     "previewJhNPT5QxoI6h2TujleChtJ7qTxNZqSAZ",
     base_url="https://cardano-preview.blockfrost.io/api/",
@@ -14,7 +16,19 @@ try:
     utxos = context.utxos(address)
     print("UTXOs for the address:")
     for utxo in utxos:
-        print(utxo) 
+        utxo_s.append(utxo)  
 
 except Exception as e:
     print("Error fetching UTXOs or processing transaction:", e)
+
+with open ("utxo.txt", "w") as f:
+    f.write(str(utxo_s))
+
+utxo_lines = str(utxo_s[0]).splitlines()
+
+# Iterate through each line and process it
+if "'multi_asset': {}" in str(utxo_s[0]):
+    for line in utxo_lines:
+        print(line)
+else:
+    print("UTXO contains multi_asset")

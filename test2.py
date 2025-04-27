@@ -84,8 +84,9 @@ try:
     # Create a transaction builder
     builder = TransactionBuilder(context)
 
-    # Add inputs from UTXOs - ĐỂ PYCARDANO TỰ CHỌN
-    builder.add_input(utxos[4])
+    # Add inputs from UTXOs 
+    print("utxo is: ", utxos[14])
+    builder.add_input(utxos[14])
 
     # Add the output (recipient address and amount)
     recipient_address = Address.from_primitive(recipient_address_str)
