@@ -26,6 +26,10 @@
             border-color: var(--secondary-color);
         }
 
+        .navbar-brand img {
+            width: 12rem;
+        }
+
         .navbar-toggler-icon {
             background-image: url("data:image/svg+xml;charset=utf8,%3Csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath stroke='%230033ad' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3E%3C/svg%3E");
         }
@@ -80,6 +84,20 @@
             background-color: var(--light-bg);
             padding: 60px 0;
             margin-bottom: 30px;
+        }
+        .img-fluid {
+            position: relative;
+            z-index: 3;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(20px);
+            }
+            50% {
+                transform: translateY(-40px);
+            }
         }
         </style>
         {% block styles %}{% endblock %}

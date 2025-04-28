@@ -10,12 +10,17 @@
                 <h1 class="display-4 fw-bold">Support Projects with Cardano</h1>
                 <p class="lead mb-4">A transparent and secure way to donate using blockchain technology. Every transaction is recorded on the Cardano blockchain, ensuring complete transparency.</p>
                 <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                    <a href="#campaigns" class="btn btn-primary btn-lg px-4 me-md-2">Browse Campaigns</a>
-                    <a href="{{ url_for('create_campaign') }}" class="btn btn-outline-secondary btn-lg px-4">Create Campaign</a>
+                    <div class="w-50">
+                        <a href="#campaigns" class="btn btn-primary btn-lg px-4 me-md-2">Browse Campaigns</a>
+                    </div>
+                    <div class="w-50">
+                        <a href="{{ url_for('create_campaign') }}" class="btn btn-outline-secondary btn-lg px-4">Create Campaign</a>
+                    </div>
+                    
                 </div>
             </div>
-            <div class="col-md-5">
-                <img src="https://cardano.org/static/brandmark-8ffa3fd2b3aa17e1f4fad54f7bed5a66.svg" class="img-fluid" alt="Cardano Logo" style="max-height: 200px;">
+            <div class="col-md-5 d-flex justify-content-center">
+                <img src="../static/images/cardano.png" class="img-fluid" alt="Cardano Logo" style="width: 150px;">
             </div>
         </div>
     </div>
