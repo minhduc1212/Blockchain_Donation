@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ campaign.title }} - Cardano Donation Platform{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <h1 class="mb-4">{{ campaign.title }}</h1>
+            
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: {{ campaign.progress_percentage }}%;" 
+                            aria-valuenow="{{ campaign.progress_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ campaign.progress_percentage }}%
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <h4>{{ campaign.current_amount }} ADA</h4>
+                            <p class="text-muted">raised of {{ campaign.goal_amount }} ADA goal</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4>{{ donations|length }}</h4>
+                            <p class="text-muted">donations</p>
+                        </div>
+                        <div class="col-md-4">
+                            <h4>
+                                {% if campaign.is_active %}
+                                Active
+                                {% else %}
+                                Ended
+                                {% endif %}
+                            </h4>
+                            <p class="text-muted">
+                                {% if campaign.is_active %}
+                                until {{ campaign.end_date.strftime('%B %d, %Y') }}
+                                {% else %}
+                                on {{ campaign.end_date.strftime('%B %d, %Y') }}
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">About this campaign</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ campaign.description }}</p>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Blockchain Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Campaign Wallet Address</h6>
+                        <div class="input-group">
+                            <input type="text" class="form-control" value="{{ campaign.wallet_address }}" readonly>
+                            <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('{{ campaign.wallet_address }}')">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </div>
+                        <small class="text-muted">Send ADA directly to this address to donate</small>
+                    </div>
+                    
+                    <div>
+                        <a href="https://preview.cexplorer.io/address/{{ campaign.wallet_address }}" class="btn btn-outline-primary" target="_blank">
+                            <i class="bi bi-box-arrow-up-right me-2"></i>View on Blockchain Explorer
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Donation History</h5>
+                </div>
+                <div class="card-body">
+                    {% if donations %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Donor</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Transaction</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for donation in donations %}
+                                <tr>
+                                    <td>{{ donation.donor_name }}</td>
+                                    <td>{{ donation.amount }} ADA</td>
+                                    <td>{{ donation.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        {% if donation.verified %}
+                                        <span class="badge bg-success">Verified</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if donation.transaction_hash %}
+                                        <a href="https://preview.cexplorer.io/tx/{{ donation.transaction_hash }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </a>
+                                        {% else %}
+                                        <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center my-4">No donations yet. Be the first to contribute!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px; z-index: 1;">
+                <div class="card-header">
+                    <h5 class="mb-0">Make a Donation</h5>
+                </div>
+                <div class="card-body">
+                    {% if campaign.is_active %}
+                    <p>Your donation will help this campaign reach its goal.</p>
+                    <a href="{{ url_for('donate', campaign_id=campaign.id) }}" class="btn btn-primary w-100 mb-3">
+                        Donate Now
+                    </a>
+                    <small class="text-muted d-block text-center">Powered by Cardano Blockchain</small>
+                    {% else %}
+                    <div class="alert alert-warning">
+                        This campaign has ended and is no longer accepting donations.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            {% if transactions %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Fund Usage Transparency</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for transaction in transactions %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="mb-1">{{ transaction.amount }} ADA</h6>
+                                <small class="text-muted">{{ transaction.timestamp.strftime('%Y-%m-%d') }}</small>
+                            </div>
+                            <p class="mb-1">{{ transaction.description }}</p>
+                            <small>
+                                <a href="https://preview.cexplorer.io/tx/{{ transaction.transaction_hash }}" target="_blank">
+                                    View transaction
+                                </a>
+                            </small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // You can add any campaign-specific JavaScript here
+    });
+</script>
+{% endblock %} 

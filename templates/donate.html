@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Donate to {{ campaign.title }} - Cardano Donation Platform{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2 class="mb-0">Donate to: {{ campaign.title }}</h2>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <div class="progress mb-3">
+                            <div class="progress-bar" role="progressbar" style="width: {{ campaign.progress_percentage }}%;" 
+                                aria-valuenow="{{ campaign.progress_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                {{ campaign.progress_percentage }}%
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>{{ campaign.current_amount }} ADA raised</span>
+                            <span>Goal: {{ campaign.goal_amount }} ADA</span>
+                        </div>
+                    </div>
+                    
+                    <ul class="nav nav-tabs mb-3" id="donationTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="wallet-tab" data-bs-toggle="tab" data-bs-target="#wallet-content" type="button" role="tab" aria-controls="wallet-content" aria-selected="true">
+                                Wallet Connection
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-content" type="button" role="tab" aria-controls="manual-content" aria-selected="false">
+                                Manual Transfer
+                            </button>
+                        </li>
+                    </ul>
+                    
+                    <div class="tab-content" id="donationTabsContent">
+                        <!-- Wallet Connection Tab -->
+                        <div class="tab-pane fade show active" id="wallet-content" role="tabpanel" aria-labelledby="wallet-tab">
+                            <form method="POST" action="{{ url_for('donate', campaign_id=campaign.id) }}" id="donationForm">
+                                <div class="mb-3">
+                                    <label for="amount" class="form-label">Donation Amount (ADA)</label>
+                                    <div class="input-group">
+                                        <input type="number" step="0.01" min="1" class="form-control" id="amount" name="amount" required>
+                                        <span class="input-group-text">ADA</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="donor_name" class="form-label">Your Name (Optional)</label>
+                                    <input type="text" class="form-control" id="donor_name" name="donor_name">
+                                    <div class="form-text">Leave blank to donate anonymously</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="wallet_address" class="form-label">Your Wallet Address</label>
+                                    <input type="text" class="form-control" id="wallet_address" name="wallet_address" 
+                                        {% if session.get('wallet_address') %}
+                                            value="{{ session.get('wallet_address') }}"
+                                        {% endif %}
+                                        required>
+                                </div>
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary" id="donateBtn">Donate Now</button>
+                                    <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" class="btn btn-outline-secondary">Cancel</a>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- Manual Transfer Tab -->
+                        <div class="tab-pane fade" id="manual-content" role="tabpanel" aria-labelledby="manual-tab">
+                            <div class="alert alert-info">
+                                <h5>Direct Blockchain Transfer</h5>
+                                <p>You can send ADA directly to the campaign's wallet address:</p>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Campaign Wallet Address</h5>
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" value="{{ campaign.wallet_address }}" id="campaignAddress" readonly>
+                                        <button class="btn btn-outline-primary" type="button" onclick="copyToClipboard('campaignAddress')">
+                                            <i class="bi bi-clipboard"></i> Copy
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="text-center">
+                                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ campaign.wallet_address }}" 
+                                            alt="QR Code for wallet address" class="img-fluid mb-3" style="max-width: 150px;">
+                                    </div>
+                                    
+                                    <p class="card-text">After making your donation, please contact the campaign owner to verify your contribution.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">About This Campaign</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ campaign.description }}</p>
+                    <div class="text-end">
+                        <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" class="btn btn-link">Back to Campaign</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function copyToClipboard(elementId) {
+        const element = document.getElementById(elementId);
+        element.select();
+        document.execCommand('copy');
+        
+        // Show tooltip or notification
+        alert('Address copied to clipboard!');
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const donationForm = document.getElementById('donationForm');
+        
+        donationForm.addEventListener('submit', function(event) {
+            // In a real app, we would handle the wallet connection here
+            // For now, we'll just submit the form normally
+        });
+    });
+</script>
+{% endblock %} 

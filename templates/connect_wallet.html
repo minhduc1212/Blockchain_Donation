@@ -1,0 +1,351 @@
+{% extends 'base.html' %}
+
+{% block title %}Connect Wallet - Cardano Donation Platform{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Connect Your Cardano Wallet</h2>
+                </div>
+                <div class="card-body">
+                    <p class="lead mb-4">Connect your wallet to easily track donations and manage campaigns.</p>
+                    
+                    <div id="walletInfoAlert" class="alert alert-info mb-4">
+                        <h5><i class="bi bi-info-circle me-2"></i>Important Setup Information</h5>
+                        <p>Before connecting your wallet, please ensure you have:</p>
+                        <ol>
+                            <li>Installed one of the supported Cardano wallet extensions (Eternl, Nami, or Flint)</li>
+                            <li>Set up a DApp account in your wallet settings</li>
+                        </ol>
+                        <div class="mt-2">
+                            <strong>For Eternl users:</strong> Open your wallet, click the connection icon in the top-right, select your account, and click 'Connect As DApp Account'.
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4" id="walletOptions">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 text-center wallet-card" data-wallet="eternl" onclick="connectWallet('eternl')">
+                                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                                    <img src="{{ url_for('static', filename='img/eternl-logo.svg') }}" alt="Eternl Wallet" class="img-fluid mb-3" style="height: 60px;">
+                                    <h5 class="card-title">Eternl</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 text-center wallet-card" data-wallet="nami" onclick="connectWallet('nami')">
+                                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                                    <img src="{{ url_for('static', filename='img/nami-logo.svg') }}" alt="Nami Wallet" class="img-fluid mb-3" style="height: 60px;">
+                                    <h5 class="card-title">Nami</h5>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100 text-center wallet-card" data-wallet="flint" onclick="connectWallet('flint')">
+                                <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                                    <img src="{{ url_for('static', filename='img/flint-logo.svg') }}" alt="Flint Wallet" class="img-fluid mb-3" style="height: 60px;">
+                                    <h5 class="card-title">Flint</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="manualEntrySection" class="mb-4">
+                        <hr>
+                        <h5 class="mb-3">Or enter your wallet address manually:</h5>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="manualAddress" placeholder="addr1...">
+                            <button class="btn btn-primary" type="button" onclick="saveManualAddress()">Save</button>
+                        </div>
+                        <div class="form-text">This address will be used to identify your donations and campaigns.</div>
+                    </div>
+                    
+                    <div id="connectSection" class="d-none">
+                        <div class="alert alert-info" id="connectingMessage">
+                            <div class="d-flex align-items-center">
+                                <div class="spinner-border text-primary me-3" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <div>
+                                    <h5 class="mb-1">Connecting to <span id="selectedWalletName">wallet</span>...</h5>
+                                    <p class="mb-0">Please approve the connection request in your wallet.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-success d-none" id="successMessage">
+                            <h5 class="mb-1">Wallet Connected Successfully!</h5>
+                            <p class="mb-0">You can now manage donations and campaigns.</p>
+                            <div class="wallet-details mt-3">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <strong>Wallet:</strong> <span id="connectedWalletName"></span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Balance:</strong> <span id="walletBalance"></span> ADA
+                                    </div>
+                                    <div class="col-md-4">
+                                        <strong>Network:</strong> <span id="walletNetwork"></span>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <strong>Address:</strong> 
+                                    <div class="input-group">
+                                        <input type="text" class="form-control form-control-sm" id="walletAddress" readonly>
+                                        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="copyAddress()">
+                                            <i class="bi bi-clipboard"></i>
+                                        </button>
+                                    </div>
+                                    <div class="form-text text-success d-none" id="copySuccess">Address copied to clipboard!</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-danger d-none" id="errorMessage">
+                            <h5 class="mb-1">Connection Failed</h5>
+                            <p class="mb-0" id="errorDetails">Could not connect to wallet. Please try again.</p>
+                            <div class="mt-3 d-none" id="errorSolution">
+                                <strong>How to fix this:</strong>
+                                <ol class="mb-0 mt-1">
+                                    <li>Open your wallet extension</li>
+                                    <li>Click the connection icon in the top-right</li>
+                                    <li>Select the wallet you want to use</li>
+                                    <li>Click "Connect as DApp Account"</li>
+                                    <li>Return to this page and try again</li>
+                                </ol>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 mt-4">
+                        <button id="continueButton" class="btn btn-primary d-none" onclick="redirectToHome()">Continue to Dashboard</button>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Back to Home</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .wallet-card {
+        cursor: pointer;
+        transition: transform 0.3s, box-shadow 0.3s;
+        border: 2px solid transparent;
+        position: relative;
+    }
+    
+    .wallet-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .wallet-card.selected {
+        border-color: var(--bs-primary);
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .wallet-details {
+        background-color: rgba(255, 255, 255, 0.7);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    
+    .not-available-badge {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/wallet-connector.js') }}"></script>
+<script>
+    let connectedWalletAddress = null;
+    
+    async function connectWallet(walletName) {
+        // Reset messages
+        document.querySelectorAll('.wallet-card').forEach(card => {
+            card.classList.remove('selected');
+        });
+        document.querySelector(`.wallet-card[data-wallet="${walletName}"]`).classList.add('selected');
+        
+        // Show connecting section
+        document.getElementById('connectSection').classList.remove('d-none');
+        document.getElementById('connectingMessage').classList.remove('d-none');
+        document.getElementById('successMessage').classList.add('d-none');
+        document.getElementById('errorMessage').classList.add('d-none');
+        document.getElementById('errorSolution').classList.add('d-none');
+        document.getElementById('selectedWalletName').textContent = walletName;
+        
+        try {
+            // Check if the wallet is available
+            if (!walletConnector.isWalletAvailable(walletName)) {
+                document.getElementById('connectingMessage').classList.add('d-none');
+                document.getElementById('errorMessage').classList.remove('d-none');
+                document.getElementById('errorDetails').textContent = 
+                    `${walletName} wallet is not installed or enabled. Please install the ${walletName} extension and refresh the page.`;
+                return;
+            }
+            
+            // Connect to the wallet
+            const result = await walletConnector.connect(walletName);
+            
+            document.getElementById('connectingMessage').classList.add('d-none');
+            
+            if (result.success) {
+                // Store wallet address
+                connectedWalletAddress = result.address;
+                
+                // Show success message with wallet info
+                document.getElementById('successMessage').classList.remove('d-none');
+                document.getElementById('walletAddress').value = result.address;
+                document.getElementById('walletBalance').textContent = result.balance;
+                document.getElementById('walletNetwork').textContent = result.network;
+                document.getElementById('connectedWalletName').textContent = 
+                    walletName.charAt(0).toUpperCase() + walletName.slice(1);
+                
+                // Save wallet address to backend session
+                saveWalletAddress(result.address);
+                
+                // Hide manual entry and show continue button
+                document.getElementById('manualEntrySection').classList.add('d-none');
+                document.getElementById('continueButton').classList.remove('d-none');
+                document.getElementById('walletInfoAlert').classList.add('d-none');
+            } else {
+                // Show error message
+                document.getElementById('errorMessage').classList.remove('d-none');
+                document.getElementById('errorDetails').textContent = result.error || 'Unknown error connecting to wallet';
+                
+                // If the error is related to address not available, show solution
+                if (result.error && result.error.includes('DApp account')) {
+                    document.getElementById('errorSolution').classList.remove('d-none');
+                }
+            }
+        } catch (error) {
+            console.error('Wallet connection error:', error);
+            document.getElementById('connectingMessage').classList.add('d-none');
+            document.getElementById('errorMessage').classList.remove('d-none');
+            document.getElementById('errorDetails').textContent = error.message || 'Unknown error connecting to wallet';
+        }
+    }
+    
+    function saveManualAddress() {
+        const address = document.getElementById('manualAddress').value;
+        
+        if (!address || address.trim() === '') {
+            alert('Please enter a valid wallet address');
+            return;
+        }
+        
+        if (!address.startsWith('addr1')) {
+            if (!confirm('The address does not appear to be a valid Cardano address. Are you sure you want to continue?')) {
+                return;
+            }
+        }
+        
+        saveWalletAddress(address);
+        
+        // Show success message
+        document.getElementById('connectSection').classList.remove('d-none');
+        document.getElementById('successMessage').classList.remove('d-none');
+        document.getElementById('walletAddress').value = address;
+        document.getElementById('walletBalance').textContent = 'N/A';
+        document.getElementById('walletNetwork').textContent = 'N/A';
+        document.getElementById('connectedWalletName').textContent = 'Manual Entry';
+        
+        // Show continue button
+        document.getElementById('continueButton').classList.remove('d-none');
+        document.getElementById('walletInfoAlert').classList.add('d-none');
+    }
+    
+    function saveWalletAddress(address) {
+        // Send address to backend
+        fetch("{{ url_for('store_wallet') }}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ address: address }),
+        });
+    }
+    
+    function copyAddress() {
+        const addressInput = document.getElementById('walletAddress');
+        addressInput.select();
+        document.execCommand('copy');
+        
+        // Show copy success message
+        const copySuccess = document.getElementById('copySuccess');
+        copySuccess.classList.remove('d-none');
+        
+        // Hide after 2 seconds
+        setTimeout(() => {
+            copySuccess.classList.add('d-none');
+        }, 2000);
+    }
+    
+    function redirectToHome() {
+        window.location.href = "{{ url_for('index') }}";
+    }
+    
+    // Check if any wallet is available
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add message if no wallet extension is detected
+        if (!window.cardano) {
+            const walletOptions = document.getElementById('walletOptions');
+            const noWalletAlert = document.createElement('div');
+            noWalletAlert.className = 'alert alert-warning w-100 mb-3';
+            noWalletAlert.innerHTML = `
+                <h5>No Cardano Wallet Extensions Detected</h5>
+                <p>To connect your wallet, please install one of these extensions:</p>
+                <ul>
+                    <li><a href="https://eternl.io/app/mainnet/welcome" target="_blank">Eternl</a></li>
+                    <li><a href="https://namiwallet.io/" target="_blank">Nami</a></li>
+                    <li><a href="https://flint-wallet.com/" target="_blank">Flint</a></li>
+                </ul>
+            `;
+            walletOptions.insertBefore(noWalletAlert, walletOptions.firstChild);
+        }
+        
+        // Check which wallets are available and update UI
+        const wallets = ['eternl', 'nami', 'flint'];
+        let availableWallets = 0;
+        
+        wallets.forEach(wallet => {
+            const available = walletConnector.isWalletAvailable(wallet);
+            const card = document.querySelector(`.wallet-card[data-wallet="${wallet}"]`);
+            
+            if (available) {
+                availableWallets++;
+            } else {
+                // Mark wallet as not available
+                card.classList.add('opacity-50');
+                const notAvailable = document.createElement('div');
+                notAvailable.className = 'badge bg-warning text-dark not-available-badge';
+                notAvailable.textContent = 'Not Installed';
+                card.appendChild(notAvailable);
+            }
+        });
+        
+        // Add message if none of the specific wallets are available but cardano object exists
+        if (availableWallets === 0 && window.cardano) {
+            const walletOptions = document.getElementById('walletOptions');
+            const otherWalletAlert = document.createElement('div');
+            otherWalletAlert.className = 'alert alert-info w-100 mb-3';
+            otherWalletAlert.innerHTML = `
+                <h5>Other Cardano Wallet Detected</h5>
+                <p>You have a Cardano wallet installed, but it's not one of our directly supported wallets. 
+                For the best experience, we recommend using Eternl, Nami, or Flint.</p>
+            `;
+            walletOptions.insertBefore(otherWalletAlert, walletOptions.firstChild);
+        }
+    });
+</script>
+{% endblock %} 

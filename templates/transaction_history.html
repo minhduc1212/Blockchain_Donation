@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaction History - Cardano Donation Platform{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Transaction History</h1>
+            <p class="lead">View all blockchain transactions for complete transparency.</p>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">All Transactions</h5>
+                    <div>
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                Filter
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="filterDropdown">
+                                <li><a class="dropdown-item active" href="#">All Transactions</a></li>
+                                <li><a class="dropdown-item" href="#">Donations</a></li>
+                                <li><a class="dropdown-item" href="#">Withdrawals</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Transaction Hash</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Campaign</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Date</th>
+                                    <th>View</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tx in transactions %}
+                                <tr>
+                                    <td>
+                                        <span class="text-truncate d-inline-block" style="max-width: 100px;" 
+                                              data-bs-toggle="tooltip" data-bs-placement="top" title="{{ tx.transaction_hash }}">
+                                            {{ tx.transaction_hash[:8] }}...{{ tx.transaction_hash[-4:] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if tx.transaction_type == 'donation' %}
+                                        <span class="badge bg-success">Donation</span>
+                                        {% else %}
+                                        <span class="badge bg-primary">Withdrawal</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ tx.amount }} ADA</td>
+                                    <td>
+                                        <a href="{{ url_for('campaign_detail', campaign_id=tx.campaign_id) }}">
+                                            {{ tx.campaign.title }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate d-inline-block" style="max-width: 100px;" 
+                                              data-bs-toggle="tooltip" data-bs-placement="top" title="{{ tx.from_address }}">
+                                            {{ tx.from_address[:8] }}...{{ tx.from_address[-4:] }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="text-truncate d-inline-block" style="max-width: 100px;" 
+                                              data-bs-toggle="tooltip" data-bs-placement="top" title="{{ tx.to_address }}">
+                                            {{ tx.to_address[:8] }}...{{ tx.to_address[-4:] }}
+                                        </span>
+                                    </td>
+                                    <td>{{ tx.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                    <td>
+                                        <a href="https://preview.cexplorer.io/tx/{{ tx.transaction_hash }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-box-arrow-up-right"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <nav aria-label="Transaction history pagination">
+                        <ul class="pagination justify-content-center mt-4">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-receipt fs-1 text-muted mb-3"></i>
+                        <h4>No Transactions Yet</h4>
+                        <p class="text-muted">Transactions will appear here when donations are made or funds are withdrawn.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Blockchain Explorer</h5>
+                </div>
+                <div class="card-body">
+                    <p>For advanced users, you can view more detailed transaction information on the Cardano blockchain explorer.</p>
+                    <a href="https://preview.cexplorer.io/" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>Open Cardano Explorer
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips for truncated addresses
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %} 
