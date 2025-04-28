@@ -4,8 +4,46 @@ from pycardano import (
     Value  # Import Value to handle Lovelace amounts
 )
 
-# --- Replace Placeholder Values ---
-# Blockfrost Project ID (register for free at Blockfrost.io)
+def get_utxo(amount_to_spend, fee_lovelace, sender_address, context):
+    utxo_s = []
+    first_valid_utxo_index = 0
+    address = Address.from_primitive(sender_address)
+
+    #get all utxo
+    utxos = context.utxos(address)
+    for utxo in utxos:
+        utxo_s.append(utxo)
+
+    for i, utxo in enumerate(utxo_s):
+        if not utxo.output.amount.multi_asset: # Checks if the dictionary is empty
+            print(f"  UTXO {i} contains only ADA.")
+
+            # 2. Check if the ADA amount is sufficient
+            utxo_value = utxo.output.amount.coin
+            print(f"  UTXO {i} value: {utxo_value} lovelace.")
+
+            if utxo_value > amount_to_spend:
+                first_valid_utxo_index = i    # Store the index
+                break 
+            else:
+                print(f"  UTXO {i} does not have enough ADA ({utxo_value} <= {amount_to_spend}).")
+        else:
+            print(f"  UTXO {i} contains multi-asset (native tokens). Skipping.")
+
+    utxo_lines = str(utxo_s[first_valid_utxo_index]).splitlines()
+    for line in utxo_lines:
+        if "transaction_id" in line:
+            # Extract the transaction hash
+            transaction_id = line.split("'")[-2].strip()
+            print("Transaction ID:", transaction_id)
+        if "index" in line:
+            # Extract the index and convert it to an integer
+            index = int(line.split()[1].replace(",", "").strip())
+            print("Index:", index)
+        
+    return transaction_id, index, utxo_value
+
+
 BLOCKFROST_PROJECT_ID = "previewJhNPT5QxoI6h2TujleChtJ7qTxNZqSAZ"
 NETWORK = "https://cardano-preview.blockfrost.io/api/"
 
@@ -14,29 +52,15 @@ context = BlockFrostChainContext(BLOCKFROST_PROJECT_ID, base_url=NETWORK)
 # Sender and receiver addresses
 sender_address = "addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj"
 receiver_address = "addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj"
+fee_lovelace = 170000
+send_amount_lovelace = 2000000
 
-# Transaction input details
-input_tx_id_hex = "c21db19ce16e5f3e77c8b086e07077859378b8564cc7ffb3c7d30114950c17e9"
-input_tx_index = 1
+input_tx_id_hex, input_tx_index, input_amount_lovelace  = get_utxo(send_amount_lovelace, fee_lovelace, sender_address, context)
 
-# Fetch UTXOs for the sender address
-"""utxos = context.utxos(str(sender_address))
-if not utxos:
-    print(f"ERROR: No UTXOs found for address {sender_address}.")
-    print(f"Please fund this address on the testnet network.")
-    exit()
+print(f"Transaction hash: {input_tx_id_hex}")
+print(f"tx_id: {input_tx_index}")
+print(f"Input amount: {input_amount_lovelace} lovelace")
 
-print(f"Found {len(utxos)} UTXO(s).")
-total = sum(utxo.output.amount.coin for utxo in utxos)
-print(f"Total ADA balance: {sum / 1_000_000} ADA ({sum} lovelace)")"""
-
-input_amount_lovelace = 9639141629
-
-# Amount to send and estimated fee
-send_amount_lovelace = 2_000_000
-fee_lovelace = 170_000
-
-# Create address objects
 try:
     my_address = Address.from_primitive(sender_address)
     recipient_address = Address.from_primitive(receiver_address)
@@ -103,14 +127,5 @@ transaction = Transaction(
 # Serialize transaction to CBOR hex
 cbor_hex = transaction.to_cbor_hex()
 
-# Print results
-print("\n--- Transaction Object (Python) ---")
-print(transaction)
-
 print("\n--- Raw Transaction CBOR (Hex - Unsigned) ---")
 print(cbor_hex)
-
-print("\n--- Next Steps ---")
-print("1. Save this CBOR hex to a file (e.g., tx.raw.cborhex).")
-print("2. Use cardano-cli or another library to SIGN this transaction with the private key corresponding to the input address.")
-print("3. Submit the signed transaction to the Cardano network.")
