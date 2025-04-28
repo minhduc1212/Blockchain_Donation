@@ -1,0 +1,120 @@
+build web 3 with flask 
+use blockfrost
+use wallet eternl to connect and interact
+
+
+donation platform  (blockchain cardano hackathone)
+front end thì cần có: đăng nhập, 
+tạo dự án quyên góp, 
+quản lý dự án quyên góp,
+ quyên góp, 
+ lịch sử quyên góp,
+  lịch sử dử dụng số tiền mà người dùng đã quyên góp, 
+  connect ví
+  
+  
+overall donation platform
+- Tạo dự án quyên góp
+- Cho phép người dùng donate qua blockchain (Cardano)
+- Hiển thị minh bạch dòng tiền mỗi dự án
+
+---
+
+## 🎯 *Tổng Quan Dự Án*
+
+| Thành viên | Vai trò chính | Kỹ năng chính |
+|------------|----------------|---------------|
+| Dev Backend | Blockchain & Server | Python, PyCardano, API |
+| Dev Frontend | UI/UX & Web Logic | HTML, CSS, JavaScript |
+| Dev Fullstack | Tích hợp + Quản lý DB | Python, API, Web |
+
+---
+
+
+
+- Làm rõ yêu cầu hệ thống:
+  - Người tạo dự án có thể tạo chiến dịch quyên góp
+  - Người donate chuyển ADA qua blockchain
+  - Hệ thống ghi lại transaction và hiển thị công khai
+
+*Backend*
+- Cài đặt môi trường Python, PyCardano
+- Tạo ví thử nghiệm (testnet), kiểm tra giao dịch đơn giản
+
+*Frontend*
+- Thiết kế sơ bộ UI: Trang chủ, Trang tạo dự án, Trang donate, Trang theo dõi dự án
+
+---
+
+*Fullstack*
+- Thiết kế sơ đồ database (SQLite hoặc PostgreSQL)
+  - Bảng Campaigns, Donations, Users (nếu có đăng nhập)
+- Thiết kế API:
+  - POST /campaigns – Tạo chiến dịch
+  - GET /campaigns – Danh sách chiến dịch
+  - POST /donate – Gửi donate
+  - GET /campaign/:id – Chi tiết + lịch sử donate
+
+*Backend*
+- Dựng Flask FastAPI với các route trên
+
+---
+
+### : Tích hợp Blockchain bằng PyCardano*
+*Backend*
+- Dùng PyCardano để:
+  - Tạo địa chỉ ví cho mỗi chiến dịch
+  - Nhận giao dịch từ người donate
+  - Ghi nhận transaction vào cơ sở dữ liệu
+- Kiểm tra tương tác với Cardano testnet
+
+---
+
+### : Xây dựng giao diện và kết nối API*
+*Frontend*
+- Dựng giao diện bằng HTML + CSS:
+  - Trang chủ: danh sách chiến dịch
+  - Trang tạo chiến dịch
+  - Trang donate
+
+*Fullstack*
+- Dùng JavaScript (fetch API) để gọi backend
+- Hiển thị dữ liệu từ API lên trang
+
+---
+
+###  Hiển thị dòng tiền minh bạch*
+*Backend*
+- Ghi nhận ID giao dịch blockchain vào DB
+- Tính tổng số tiền đã donate cho mỗi chiến dịch
+
+*Frontend*
+- Hiển thị bảng thống kê donate
+- Thêm biểu đồ (nếu có thời gian)
+
+---
+
+###  Kiểm thử và sửa lỗi*
+*Cả nhóm*
+- Test toàn bộ chức năng
+- Kiểm thử các trường hợp:
+  - Donate thành công
+  - Giao dịch lỗi
+  - Truy cập thông tin chiến dịch
+- Fix bug, tối ưu trải nghiệm người dùng
+
+
+
+## ✅ Kết quả mong muốn cuối cung
+
+- [x] Tạo chiến dịch quyên góp
+- [x] Người dùng donate thông qua blockchain
+- [x] Hệ thống ghi nhận và hiển thị công khai
+
+
+---
+
+
+tao them phan comunity de dang bai keu goi chien dich 
+va them phan sign in log in
+lam lai cai connect vi 

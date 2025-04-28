@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Cardano Donation Platform{% endblock %}
+
+{% block content %}
+<section class="header-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-7">
+                <h1 class="display-4 fw-bold">Support Projects with Cardano</h1>
+                <p class="lead mb-4">A transparent and secure way to donate using blockchain technology. Every transaction is recorded on the Cardano blockchain, ensuring complete transparency.</p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    <a href="#campaigns" class="btn btn-primary btn-lg px-4 me-md-2">Browse Campaigns</a>
+                    <a href="{{ url_for('create_campaign') }}" class="btn btn-outline-secondary btn-lg px-4">Create Campaign</a>
+                </div>
+            </div>
+            <div class="col-md-5">
+                <img src="https://cardano.org/static/brandmark-8ffa3fd2b3aa17e1f4fad54f7bed5a66.svg" class="img-fluid" alt="Cardano Logo" style="max-height: 200px;">
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container" id="campaigns">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="text-center mb-4">Active Campaigns</h2>
+        </div>
+    </div>
+    
+    {% if campaigns %}
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for campaign in campaigns %}
+        <div class="col">
+            <div class="card h-100 campaign-card">
+                <div class="card-header bg-transparent">
+                    <span class="badge bg-primary">{{ 'Active' if campaign.is_active else 'Ended' }}</span>
+                </div>
+                <div class="card-body">
+                    <h5 class="card-title">{{ campaign.title }}</h5>
+                    <p class="card-text">{{ campaign.description|truncate(100) }}</p>
+                    
+                    <div class="progress mb-3">
+                        <div class="progress-bar" role="progressbar" style="width: {{ campaign.progress_percentage }}%;" 
+                            aria-valuenow="{{ campaign.progress_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                            {{ campaign.progress_percentage }}%
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <div>
+                            <small class="text-muted">Raised</small>
+                            <div class="fw-bold">{{ campaign.current_amount }} ADA</div>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">Goal</small>
+                            <div class="fw-bold">{{ campaign.goal_amount }} ADA</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-2 d-md-flex justify-content-between">
+                        <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" class="btn btn-outline-primary">View Details</a>
+                        <a href="{{ url_for('donate', campaign_id=campaign.id) }}" class="btn btn-primary">Donate</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12 text-center">
+            <p class="lead">No campaigns available yet.</p>
+            <a href="{{ url_for('create_campaign') }}" class="btn btn-primary mt-3">Create the First Campaign</a>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-9">
+                            <h4>Have a Project or Cause?</h4>
+                            <p class="mb-md-0">Start your own campaign and begin accepting donations through Cardano.</p>
+                        </div>
+                        <div class="col-md-3 text-md-end">
+                            <a href="{{ url_for('create_campaign') }}" class="btn btn-primary">Create Campaign</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Cardano Donation Platform{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="mb-3">Campaign Dashboard</h1>
+            <p class="lead">Manage your campaigns and track donations.</p>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Campaigns</h5>
+                    <h2 class="display-4">{{ campaigns|length }}</h2>
+                    <p class="card-text">Active campaigns you're managing</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Total Raised</h5>
+                    <h2 class="display-4">
+                        {% set total = 0 %}
+                        {% for campaign in campaigns %}
+                            {% set total = total + campaign.current_amount %}
+                        {% endfor %}
+                        {{ total }} ADA
+                    </h2>
+                    <p class="card-text">Across all campaigns</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <h5 class="card-title">Actions</h5>
+                    <a href="{{ url_for('create_campaign') }}" class="btn btn-primary mb-2 w-100">Create New Campaign</a>
+                    <a href="{{ url_for('transaction_history') }}" class="btn btn-outline-primary w-100">View Transactions</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Your Campaigns</h5>
+                </div>
+                <div class="card-body">
+                    {% if campaigns %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Goal</th>
+                                    <th>Raised</th>
+                                    <th>Progress</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for campaign in campaigns %}
+                                <tr>
+                                    <td>{{ campaign.title }}</td>
+                                    <td>{{ campaign.goal_amount }} ADA</td>
+                                    <td>{{ campaign.current_amount }} ADA</td>
+                                    <td>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar" role="progressbar" style="width: {{ campaign.progress_percentage }}%;" 
+                                                aria-valuenow="{{ campaign.progress_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <small>{{ campaign.progress_percentage }}%</small>
+                                    </td>
+                                    <td>
+                                        {% if campaign.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Ended</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('campaign_detail', campaign_id=campaign.id) }}" class="btn btn-outline-primary">View</a>
+                                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#withdrawModal{{ campaign.id }}">Withdraw</button>
+                                            <button type="button" class="btn btn-outline-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <span class="visually-hidden">More</span>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li><a class="dropdown-item" href="#">Edit</a></li>
+                                                <li><a class="dropdown-item" href="#">Close</a></li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li><a class="dropdown-item text-danger" href="#">Delete</a></li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <!-- Withdraw Modal -->
+                                        <div class="modal fade" id="withdrawModal{{ campaign.id }}" tabindex="-1" aria-labelledby="withdrawModalLabel{{ campaign.id }}" aria-hidden="true">
+                                            <div class="modal-dialog">
+                                                <div class="modal-content">
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title" id="withdrawModalLabel{{ campaign.id }}">Withdraw Funds</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <p>Campaign: <strong>{{ campaign.title }}</strong></p>
+                                                        <p>Available funds: <strong>{{ campaign.current_amount }} ADA</strong></p>
+                                                        <form id="withdrawForm{{ campaign.id }}">
+                                                            <div class="mb-3">
+                                                                <label for="withdrawAmount{{ campaign.id }}" class="form-label">Amount to withdraw (ADA)</label>
+                                                                <input type="number" class="form-control" id="withdrawAmount{{ campaign.id }}" step="0.01" min="1" max="{{ campaign.current_amount }}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label for="withdrawAddress{{ campaign.id }}" class="form-label">Destination Address</label>
+                                                                <input type="text" class="form-control" id="withdrawAddress{{ campaign.id }}" required>
+                                                            </div>
+                                                            <div class="mb-3">
+                                                                <label for="withdrawDescription{{ campaign.id }}" class="form-label">Purpose (will be visible publicly)</label>
+                                                                <textarea class="form-control" id="withdrawDescription{{ campaign.id }}" rows="3" required></textarea>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="button" class="btn btn-primary" onclick="submitWithdrawal({{ campaign.id }})">Withdraw Funds</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p>You haven't created any campaigns yet.</p>
+                        <a href="{{ url_for('create_campaign') }}" class="btn btn-primary">Create Your First Campaign</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Donations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Campaign</th>
+                                    <th>Donor</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Transaction</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% set found_donations = false %}
+                                {% for campaign in campaigns %}
+                                    {% for donation in campaign.donations %}
+                                        {% set found_donations = true %}
+                                        <tr>
+                                            <td>{{ campaign.title }}</td>
+                                            <td>{{ donation.donor_name or 'Anonymous' }}</td>
+                                            <td>{{ donation.amount }} ADA</td>
+                                            <td>{{ donation.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                                            <td>
+                                                {% if donation.transaction_hash %}
+                                                <a href="https://preview.cexplorer.io/tx/{{ donation.transaction_hash }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-box-arrow-up-right"></i>
+                                                </a>
+                                                {% else %}
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                {% endfor %}
+                                
+                                {% if not found_donations %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No donations received yet.</td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function submitWithdrawal(campaignId) {
+        const amount = document.getElementById(`withdrawAmount${campaignId}`).value;
+        const address = document.getElementById(`withdrawAddress${campaignId}`).value;
+        const description = document.getElementById(`withdrawDescription${campaignId}`).value;
+        
+        if (!amount || !address || !description) {
+            alert('Please fill all fields');
+            return;
+        }
+        
+        // In a real app, we would send this to the backend to process the withdrawal
+        alert(`Withdrawal request submitted: ${amount} ADA to ${address}`);
+        
+        // Close the modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById(`withdrawModal${campaignId}`));
+        modal.hide();
+    }
+</script>
+{% endblock %} 

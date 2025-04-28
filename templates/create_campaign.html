@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Campaign - Cardano Donation Platform{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="mb-0">Create a Donation Campaign</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('create_campaign') }}">
+                        <div class="mb-3">
+                            <label for="title" class="form-label">Campaign Title</label>
+                            <input type="text" class="form-control" id="title" name="title" required>
+                            <div class="form-text">Choose a clear, specific title that explains your cause.</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="5" required></textarea>
+                            <div class="form-text">Explain what the funds will be used for and why your cause matters.</div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="goal_amount" class="form-label">Goal Amount (ADA)</label>
+                                <input type="number" step="0.01" min="1" class="form-control" id="goal_amount" name="goal_amount" required>
+                                <div class="form-text">Set a realistic funding goal in ADA.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_date" class="form-label">End Date</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" required>
+                                <div class="form-text">When will this campaign end?</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">terms and conditions</a>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Create Campaign</button>
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>Campaign Creation Agreement</h6>
+                <p>By creating a campaign, you agree to:</p>
+                <ul>
+                    <li>Provide accurate information about your campaign and how funds will be used</li>
+                    <li>Use the donated funds only for the stated purpose</li>
+                    <li>Provide updates to donors about the progress of your campaign</li>
+                    <li>Comply with all applicable laws and regulations</li>
+                    <li>Not use the platform for any fraudulent or illegal activities</li>
+                </ul>
+                
+                <h6>Fund Management</h6>
+                <p>All donations are made through the Cardano blockchain and are publicly viewable. Campaign owners are responsible for properly managing and accounting for all funds received.</p>
+                
+                <h6>Fees</h6>
+                <p>The platform does not charge any fees for creating campaigns or receiving donations. However, normal blockchain transaction fees apply.</p>
+                
+                <h6>Termination</h6>
+                <p>We reserve the right to terminate or suspend any campaign that violates our terms and conditions or is found to be fraudulent.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">I Understand</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

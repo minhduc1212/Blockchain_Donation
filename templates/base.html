@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Cardano Donation Platform{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #0033ad;
+            --secondary-color: #2a71d4;
+            --accent-color: #44aee0;
+            --light-bg: #f8f9fa;
+            --dark-bg: #212529;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+        }
+        
+        .navbar-brand, .navbar-nav .nav-link {
+            color: white !important;
+        }
+        
+        .campaign-card {
+            transition: transform 0.3s;
+            height: 100%;
+        }
+        
+        .campaign-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .progress {
+            height: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .progress-bar {
+            background-color: var(--accent-color);
+        }
+        
+        footer {
+            background-color: var(--light-bg);
+            padding: 20px 0;
+            margin-top: 50px;
+        }
+        
+        .wallet-connect-btn {
+            border-radius: 20px;
+            padding: 8px 16px;
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: white;
+        }
+        
+        .wallet-connect-btn:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        .header-section {
+            background-color: var(--light-bg);
+            padding: 60px 0;
+            margin-bottom: 30px;
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="bi bi-heart-fill me-2"></i>Cardano Donations
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('create_campaign') }}">Create Campaign</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('transaction_history') }}">Transactions</a>
+                    </li>
+                </ul>
+                <div class="d-flex">
+                    <a href="{{ url_for('connect_wallet') }}" class="btn wallet-connect-btn" id="connectWalletBtn">
+                        {% if session.get('wallet_address') %}
+                            <i class="bi bi-wallet2 me-1"></i>{{ session.get('wallet_address')[:8] }}...{{ session.get('wallet_address')[-4:] }}
+                        {% else %}
+                            <i class="bi bi-wallet2 me-1"></i>Connect Wallet
+                        {% endif %}
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+    <footer class="py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>Cardano Donation Platform</h5>
+                    <p>A transparent way to donate using blockchain technology</p>
+                </div>
+                <div class="col-md-3">
+                    <h5>Links</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="{{ url_for('index') }}" class="text-decoration-none text-secondary">Home</a></li>
+                        <li><a href="{{ url_for('create_campaign') }}" class="text-decoration-none text-secondary">Create Campaign</a></li>
+                        <li><a href="{{ url_for('dashboard') }}" class="text-decoration-none text-secondary">Dashboard</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-3">
+                    <h5>Connect</h5>
+                    <div class="d-flex gap-3 fs-4">
+                        <a href="#" class="text-secondary"><i class="bi bi-twitter"></i></a>
+                        <a href="#" class="text-secondary"><i class="bi bi-github"></i></a>
+                        <a href="#" class="text-secondary"><i class="bi bi-telegram"></i></a>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 Cardano Donation Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html> 
