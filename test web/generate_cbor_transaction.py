@@ -7,24 +7,22 @@ from pycardano import (
 def get_utxo(amount_to_spend, fee_lovelace, sender_address, context):
     utxo_s = []
     first_valid_utxo_index = 0
-    address = Address.from_primitive(sender_address)
-
-    #get all utxo
-    utxos = context.utxos(address)
+    # Pass the string representation of the address
+    utxos = context.utxos(str(sender_address))
     for utxo in utxos:
         utxo_s.append(utxo)
 
     for i, utxo in enumerate(utxo_s):
-        if not utxo.output.amount.multi_asset: # Checks if the dictionary is empty
+        if not utxo.output.amount.multi_asset:  # Checks if the dictionary is empty
             print(f"  UTXO {i} contains only ADA.")
 
-            # 2. Check if the ADA amount is sufficient
+            # Check if the ADA amount is sufficient
             utxo_value = utxo.output.amount.coin
             print(f"  UTXO {i} value: {utxo_value} lovelace.")
 
             if utxo_value > amount_to_spend:
-                first_valid_utxo_index = i    # Store the index
-                break 
+                first_valid_utxo_index = i  # Store the index
+                break
             else:
                 print(f"  UTXO {i} does not have enough ADA ({utxo_value} <= {amount_to_spend}).")
         else:
@@ -40,7 +38,7 @@ def get_utxo(amount_to_spend, fee_lovelace, sender_address, context):
             # Extract the index and convert it to an integer
             index = int(line.split()[1].replace(",", "").strip())
             print("Index:", index)
-        
+
     return transaction_id, index, utxo_value
 
 
@@ -125,7 +123,6 @@ transaction = Transaction(
 )
 
 # Serialize transaction to CBOR hex
-cbor_hex = transaction.to_cbor_hex()
+cbor_bytes = transaction.to_cbor()  # Ensure this returns bytes
+print("Returned value:", cbor_bytes)
 
-print("\n--- Raw Transaction CBOR (Hex - Unsigned) ---")
-print(cbor_hex)

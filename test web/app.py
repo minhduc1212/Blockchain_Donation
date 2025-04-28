@@ -9,7 +9,7 @@ def get_utxo(amount_to_spend, fee_lovelace, sender_address, context):
     address = Address.from_primitive(sender_address)
 
     #get all utxo
-    utxos = context.utxos(address)
+    utxos = context.utxos(str(address))
     for utxo in utxos:
         utxo_s.append(utxo)
 
@@ -135,7 +135,7 @@ def build_transaction():
     )
 
     # Serialize transaction to CBOR hex
-    cbor_hex = transaction.to_cbor_hex()
+    cbor_hex = transaction.to_cbor()
 
     print("\n--- Raw Transaction CBOR (Hex - Unsigned) ---")
     print(cbor_hex)

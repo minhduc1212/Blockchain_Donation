@@ -16,7 +16,7 @@ context = BlockFrostChainContext(
 address = Address.from_primitive("addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj")
 
 try:
-    utxos = context.utxos(address)
+    utxos = context.utxos(str(address))
     for utxo in utxos:
         utxo_s.append(utxo)
 
@@ -56,8 +56,4 @@ for line in utxo_lines:
         index = int(line.split()[1].replace(",", "").strip())
         print("Index:", index)
         
-        
-                
-    
-            
     
