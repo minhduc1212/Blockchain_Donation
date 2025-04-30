@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect to Eternl (Unused Address)</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        button { padding: 10px 15px; font-size: 1em; cursor: pointer; }
+        #status { margin-top: 15px; font-weight: bold; }
+        #addresses { margin-top: 10px; background-color: #f0f0f0; padding: 15px; border-radius: 5px; }
+        pre { white-space: pre-wrap; word-wrap: break-word; font-size: 0.9em; }
+        .error { color: red; }
+        .success { color: green; }
+        ul { list-style: none; padding: 0; }
+        li { margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>Get Unused CBOR Hex Address from Eternl</h1>
+    <button id="connectButton">Connect Eternl & Get Unused Address</button>
+    <div id="status">Status: Not Connected</div>
+    <div id="addresses" style="display: none;">
+        <h2>Unused Address (Hex):</h2>
+        <ul id="unusedAddresses"></ul>
+    </div>
+
+    <script type="module">
+        const connectButton = document.getElementById('connectButton');
+        const statusDiv = document.getElementById('status');
+        const addressesDiv = document.getElementById('addresses');
+        const unusedAddressesUl = document.getElementById('unusedAddresses');
+
+        // Helper function to display status messages
+        function showStatus(message, isError = false) {
+            statusDiv.textContent = `Status: ${message}`;
+            statusDiv.className = isError ? 'error' : 'success';
+            console.log(message);
+            if (isError) {
+                console.error(message);
+            }
+        }
+
+        // Helper function to display unused addresses
+        function displayHexAddresses(ulElement, hexList) {
+            ulElement.innerHTML = ''; // Clear old content
+            if (hexList && hexList.length > 0) {
+                hexList.forEach(hexString => {
+                    const li = document.createElement('li');
+                    const pre = document.createElement('pre'); // Use <pre> to preserve formatting
+                    pre.textContent = hexString;
+                    li.appendChild(pre);
+                    ulElement.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'No unused addresses found.';
+                ulElement.appendChild(li);
+            }
+        }
+
+        connectButton.addEventListener('click', async () => {
+            showStatus('Checking for Cardano wallet...');
+            addressesDiv.style.display = 'none'; // Hide previous results
+            unusedAddressesUl.innerHTML = '';
+
+            // Check if a Cardano wallet is injected
+            if (typeof window.cardano === 'undefined') {
+                showStatus('Cardano wallet extension not found. Please install Eternl or another CIP-30 wallet.', true);
+                return;
+            }
+
+            // Check if Eternl wallet is available
+            const walletKey = 'eternl';
+            if (typeof window.cardano[walletKey] === 'undefined') {
+                showStatus(`${walletKey.charAt(0).toUpperCase() + walletKey.slice(1)} wallet not found.`, true);
+                return;
+            }
+
+            showStatus(`${walletKey.charAt(0).toUpperCase() + walletKey.slice(1)} wallet found. Requesting connection...`);
+
+            try {
+                // Request access from the user
+                const walletApi = await window.cardano[walletKey].enable();
+
+                showStatus(`Connected to ${walletKey.charAt(0).toUpperCase() + walletKey.slice(1)}! Fetching unused address...`, false);
+
+                // Fetch unused addresses (CBOR hex format)
+                const unusedAddressesCbor = await walletApi.getUnusedAddresses();
+
+                showStatus('Unused address received! Displaying...', false);
+
+                // Display the unused addresses
+                displayHexAddresses(unusedAddressesUl, unusedAddressesCbor);
+
+                addressesDiv.style.display = 'block'; // Show the address section
+                showStatus('Unused CBOR hex address displayed successfully.', false);
+
+            } catch (error) {
+                const errorMessage = error?.info || error?.message || 'User rejected connection or an unknown error occurred.';
+                showStatus(`Error: ${errorMessage}`, true);
+                console.error("Wallet Connection/API Error:", error);
+            }
+        });
+    </script>
+
+</body>
+</html>
