@@ -1,0 +1,132 @@
+/* New campaign */
+.new-campaign {
+    background-color: #F8F8F8;
+}
+
+.new-campaign .container {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+}
+
+.setup-campaign-text {
+    font-size: 3rem;
+    text-align: center;
+}
+
+.campaign-name, .campaign-description, .start-date-and-time, .end-date-and-duration, .donate-amount, .confirm-create {
+    width: 50%;
+}
+
+input {
+    border-radius: 0.5rem;
+    border: 1px #000 solid;
+}
+
+input:focus {
+    border-color: #0033AD;
+    outline: 3px #0033AD solid;
+}
+
+.campaign-name input, .campaign-description input, .donate-amount input {
+    width: 95%;
+    padding: 0.8rem 2.2rem;
+    margin-bottom: 0.3rem;
+}
+
+.campaign-name p, .campaign-description p, .start-date-and-time p, .end-date-and-duration p {
+    font-size: 1.3rem;
+    margin-bottom: 0.3rem;
+}
+
+.name-description .note {
+    font-size: 0.8rem;
+    margin-bottom: 0rem;
+    opacity: 0.7;
+}
+
+.name-description, .start-end {
+    margin-bottom: 1rem;
+}
+
+.start-date-and-time>div, .end-date-and-duration>div {
+    display: flex;
+    gap: 2rem;
+}
+
+.start-date-and-time>div>*, .end-date-and-duration>div>* {
+    width: 35%;
+    padding: 0.8rem 2.2rem;
+    font-size: 1.3rem;
+}
+
+.donate-amount .amount {
+    margin: 0;
+}
+
+.confirm-create button {
+    width: 45%;
+    padding: 0.8rem 2.2rem;
+    border-radius: 0.5rem;
+    border: 1px #000 solid;
+}
+
+.confirm-create .create {
+    position: relative;
+    color: #ffffff;
+    background-color: #0033AD;
+    margin-right: 5%;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.confirm-create .create::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    transition: left 0.5s ease;
+    z-index: -1;
+}
+
+.confirm-create .create:hover::before {
+    left: 0;
+}
+
+.confirm-create .create:hover {
+    color: #0033AD;
+}
+
+.confirm-create .create {
+    z-index: 2;
+}
+
+.confirm-create .cancel {
+    position: relative;
+    background-color: #ffffff;
+    overflow: hidden;
+}
+
+.confirm-create .cancel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background-color: #dfdfdf;
+    transition: left 0.5s ease;
+    z-index: -1;
+}
+
+.confirm-create .cancel:hover::before {
+    left: 0;
+}
+
+.confirm-create .cancel {
+    z-index: 2;
+}
+
+/* New campaign */
