@@ -357,3 +357,127 @@ h1 {
     padding: 0.8rem 0;
 }
 /* My campaigns */
+
+/* Transactions */
+.view-all-transaction {
+    padding: 0 2.2rem;
+    background-color: #fff;
+    box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    -webkit-box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    -moz-box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    margin-bottom: 1rem;
+}
+
+.view-all-transaction-text {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 0;
+    border-bottom: 1px #000 solid;
+}
+
+.view-all-transaction-text p {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.view-all-transaction-filter-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding: 0.5rem 1.5rem;
+    background-color: #fff;
+    border: 2px #0033AD solid;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    z-index: 0;
+}
+
+.view-all-transaction-filter-button:hover {
+    background-color: #0033AD;
+}
+
+.view-all-transaction-filter-button:hover > p, .view-all-transaction-filter-button:hover > i {
+    color: #fff;
+    z-index: 2
+}
+
+.view-all-transaction-filter-button:hover ul {
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+}
+
+.view-all-transaction-filter-button li {
+    width: 100%;
+}
+
+.view-all-transaction-filter-button li p {
+    text-align: end;
+}
+
+.view-all-transaction-filter-button > p {
+    margin-right: 1rem;
+    color: #0033AD;
+}
+
+.view-all-transaction-filter-button i {
+    color: #0033AD;
+}
+
+.view-all-transaction-filter-button ul {
+    position: absolute;
+    list-style: none;
+    top: 100%;
+    right: 0;
+    width: max-content;
+    padding: 0;
+    background-color: #fff;
+    border: 1px #000 solid;
+    border-radius: 0.5rem;
+    display: none;
+}
+
+.view-all-transaction-filter-button ul li {
+    padding: 0.8rem 1.5rem;
+}
+
+.view-all-transaction-filter-button ul li:hover {
+    width: 100%;
+    background-color: #0033AD;
+}
+
+.view-all-transaction-filter-button ul li:hover p {
+    color: #fff;
+}
+
+.view-all-transaction-main {
+    padding: 1.8rem 0;
+}
+
+.no-transaction {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.no-transaction > :nth-child(1), .no-transaction > :nth-child(2) {
+    font-size: 2.2rem;
+}
+
+.no-transaction > :nth-child(3) {
+    font-family: Oswald-Light, sans-serif;
+}
+
+.no-transaction p {
+    margin: 0;
+}
+
+.check-details, .check-details * {
+    font-family: Oswald-Light, sans-serif;
+}
+
+.check-details * {
+    text-decoration: none;
+}
+/* Transactions *
