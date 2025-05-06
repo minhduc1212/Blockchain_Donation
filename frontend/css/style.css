@@ -1,9 +1,9 @@
 /* New campaign */
-.new-campaign {
+section {
     background-color: #F8F8F8;
 }
 
-.new-campaign .container {
+section .container {
     padding-top: 5rem;
     padding-bottom: 5rem;
 }
@@ -130,3 +130,100 @@ input:focus {
 }
 
 /* New campaign */
+
+/* My campaigns */
+h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.total-campaigns-and-donate-and-donors > div > div:nth-child(1) > :nth-child(1) {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40%;
+}
+
+.total-campaigns-and-donate-and-donors > div > div:nth-child(1) > :nth-child(2) {
+    display: flex;
+    width: 60%;
+}
+
+.total-campaigns-and-donate-and-donors > div > div:nth-child(1) {
+    height: 10rem;
+}
+
+.total-campaigns-and-donate-and-donors > div > div {
+    display: flex;
+}
+
+.total-campaigns-and-donate-and-donors > div > div > div p {
+    color: #fff;
+}
+
+.total-campaigns-and-donate-and-donors > div > div > div:nth-child(2) {
+    display: flex;
+    flex-direction: column;
+    justify-content: end;
+    align-items: end;
+    margin-right: 2rem;
+}
+
+.total-campaigns-and-donate-and-donors > div > div > div:nth-child(2) p:nth-child(1) {
+    font-size: 3rem;
+    margin-bottom: 0.3rem;
+}
+
+.view-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 2.2rem
+}
+
+.view-details p {
+    font-size: 1.3rem;
+    margin-bottom: 0;
+}
+
+.view-details i {
+    font-size: 1.3rem;
+    height: 1.3rem;
+}
+
+.total-campaigns-and-donate-and-donors {
+    display: flex;
+    gap: 3rem;
+}
+
+.total-campaigns-and-donate-and-donors > div {
+    flex: 1;
+}
+
+.total-campaigns {
+    border: 2px #5DB75D solid;
+    border-radius: 0.5rem;
+}
+
+.total-campaigns-main {
+    background-color: #5DB75D;
+}
+
+.total-donate {
+    border: 2px #0033AD solid;
+    border-radius: 0.5rem;
+}
+
+.total-donate-main {
+    background-color: #0033AD;
+}
+
+.total-donors {
+    border: 2px #663398 solid;
+    border-radius: 0.5rem;
+}
+
+.total-donors-main {
+    background-color: #663398;
+}
+/* My campaigns */
