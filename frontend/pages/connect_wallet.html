@@ -53,73 +53,47 @@
                 </div>
             </div>
         </header>
-        <section class="new-campaign">
+        <section class="connect-to-wallet">
             <div class="container d-flex justify-content-center">
-                <div class="container-1">
-                    <p class="setup-campaign-text">Let's setup  your campaign</p>
-                    <div class="name-description d-flex">
-                        <div class="campaign-name">
-                            <p>Campaign name</p>
-                            <input
-                                type="text"
-                                name=""
-                                id=""
-                                placeholder="Enter campaign name"
-                            >
-                            <p class="note">Choose a clear, specific title that explains your cause</p>
-                        </div>
-                        <div class="campaign-description">
-                            <p>Description</p>
-                            <input
-                                type="text"
-                                name=""
-                                id=""
-                                placeholder="Enter description"
-                            >
-                            <p class="note">Explain what the funds will be used for and why your cause matters</p>
+                <div class="container-1" style="background-color: #fff; padding: 1rem 2rem;">
+                    <h1 style="margin-bottom: 1rem;">Connect Your Cardano Wallet</h1>
+                    <p class="text-center" style="font-family: Oswald-Light, sans-serif;">Connect your wallet to easily track donations and manage campaigns</p>
+                    <div id="walletInfoAlert">
+                        <h5 class="d-flex align-items-center"><i class="fa-solid fa-circle-info" style="margin-right: 1rem;"></i>Important Setup Information</h5>
+                        <p>Before connecting your wallet, please ensure you have:</p>
+                        <ol>
+                            <li>Installed one of the supported Cardano wallet extensions (Eternl, Nami, or Flint)</li>
+                            <li>Set up a DApp account in your wallet settings</li>
+                        </ol>
+                        <div class="mt-2">
+                            <strong>For Eternl users:</strong> Open your wallet, click the connection icon in the top-right, select your account, and click 'Connect As DApp Account'.
                         </div>
                     </div>
-                    <div class="start-end d-flex">
-                        <div class="start-date-and-time">
-                            <p>PICK A START DATE AND TIME</p>
-                            <div>
-                                <input
-                                    type="date"
-                                    name=""
-                                    class="start-date"
-                                    id=""
-                                >
-                                <input
-                                    type="time"
-                                    name=""
-                                    class="start-time"
-                                    id=""
-                                >
-                            </div>
+                    <div class="wallet-options">
+                        <div class="eternl-wallet">
+                            <img src="../assets/images/eternl.png" alt="">
+                            <p>Eternl</p>
                         </div>
-                        <div class="end-date-and-duration">
-                            <p>END DATE</p>
-                            <div>
-                                <input type="date" name="" id="">
-                                <p class="duration-time">Duration:</p>
-                            </div>
+                        <div class="nami-wallet">
+                            <img src="../assets/images/nami.png" alt="">
+                            <p>Nami</p>
+                        </div>
+                        <div class="flint-wallet">
+                            <img src="../assets/images/flint.png" alt="">
+                            <p>Flint</p>
                         </div>
                     </div>
-                    <div class="donation-and-create d-flex align-items-end">
-                        <div class="donate-amount">
-                            <p>Goal amount</p>
-                            <input
-                                type="number"
-                                class="amount"
-                                name=""
-                                id=""
-                                placeholder="Enter amount"
-                            >
+                    <div id="manualEntrySection" class="mb-4">
+                        <hr>
+                        <h5 class="mb-3">Or enter your wallet address manually:</h5>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="manualAddress" placeholder="addr1...">
+                            <button class="btn btn-primary" type="button" onclick="saveManualAddress()">Save</button>
                         </div>
-                        <div class="confirm-create">
-                            <button class="create">Create campaign</button>
-                            <Button class="cancel">Cancel</Button>
-                        </div>
+                        <div class="form-text">This address will be used to identify your donations and campaigns.</div>
+                    </div>
+                    <div>
+                        <a href="index.html" class="btn btn-outline-secondary w-100">Back to Home</a>
                     </div>
                 </div>
             </div>

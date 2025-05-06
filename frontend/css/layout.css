@@ -19,15 +19,21 @@ header {
     color: #000000;
 }
 
-.header-signin .signin {
+.header-connect-wallet .connect-wallet {
+    text-decoration: none;
     font-size: 1rem;
     color: #ffffff;
     background-color: #0033AD;
     padding: 0.8rem 2.5rem;
     border: none;
     border-radius: 0.3rem;
+    cursor: pointer;
 }
 
-.header-signin .signin:hover {
+.header-connect-wallet .connect-wallet:hover {
     background-color: #325cbe;
+}
+
+footer i {
+    font-size: 1.5rem;
 }
