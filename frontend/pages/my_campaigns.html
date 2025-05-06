@@ -35,7 +35,7 @@
                             <a class="nav-link" href="new_campaign.html">New Campaign</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="../pages/my_campaigns.html">My Campaigns</a>
+                            <a class="nav-link" href="my_campaigns.html">My Campaigns</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="#">Transactions</a>
@@ -52,7 +52,7 @@
         </header>
         <section class="my_campaigns">
             <div class="container">
-                <div class="container-1">
+                <div class="container-1 d-flex flex-column">
                     <h1>All my campaigns</h1>
                     <div class="total-campaigns-and-donate-and-donors">
                         <div class="total-campaigns">
@@ -98,6 +98,34 @@
                             <div class="view-details">
                                 <p>View details</p>
                                 <i class="fa-regular fa-circle-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="all-my-campaigns d-flex flex-column align-items-center">
+                        <div class="all-my-campaigns-text">
+                            <p>My campaigns</p>
+                        </div>
+                        <div class="all-my-campaigns-main">
+                            <div class="d-flex flex-column align-items-center">
+                                <p>You haven't created any campaigns yet.</p>
+                                <a class="create-new-campaign" href="new_campaign.html">Create your first campaign</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recent-donations d-flex flex-column align-items-center">
+                        <div class="recent-donations-text">
+                            <p>Recent donations</p>
+                        </div>
+                        <div class="recent-donations-main">
+                            <div class="recent-donations-main-category d-flex">
+                                <div><p>Campaign</p></div>
+                                <div><p>Donor</p></div>
+                                <div><p>Amount</p></div>
+                                <div><p>Date</p></div>
+                                <div><p>Transaction</p></div>
+                            </div>
+                            <div>
+                                <p class="text-center">No donations received yet.</p>
                             </div>
                         </div>
                     </div>

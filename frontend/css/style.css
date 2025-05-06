@@ -137,6 +137,10 @@ h1 {
     margin-bottom: 2rem;
 }
 
+.my_campaigns div.container-1 > div {
+    margin-bottom: 3rem;
+}
+
 .total-campaigns-and-donate-and-donors > div > div:nth-child(1) > :nth-child(1) {
     display: flex;
     justify-content: center;
@@ -178,7 +182,16 @@ h1 {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.8rem 2.2rem
+    padding: 0.8rem 2.2rem;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.view-details:hover {
+    transform: scale(1.1);
+    box-shadow: 1px 0px 29px 0px rgba(0,0,0,0.46);
+    -webkit-box-shadow: 1px 0px 29px 0px rgba(0,0,0,0.46);
+    -moz-box-shadow: 1px 0px 29px 0px rgba(0,0,0,0.46);
 }
 
 .view-details p {
@@ -209,6 +222,15 @@ h1 {
     background-color: #5DB75D;
 }
 
+.total-campaigns .view-details * {
+    color: #5DB75D;
+}
+
+.total-campaigns .view-details {
+    border: 2px #5DB75D solid;
+    border-radius: 0 0 0.4rem 0.4em;
+}
+
 .total-donate {
     border: 2px #0033AD solid;
     border-radius: 0.5rem;
@@ -218,6 +240,15 @@ h1 {
     background-color: #0033AD;
 }
 
+.total-donate .view-details * {
+    color: #0033AD;
+}
+
+.total-donate .view-details {
+    border: 2px #0033AD solid;
+    border-radius: 0 0 0.4rem 0.4rem;
+}
+
 .total-donors {
     border: 2px #663398 solid;
     border-radius: 0.5rem;
@@ -225,5 +256,104 @@ h1 {
 
 .total-donors-main {
     background-color: #663398;
+}
+
+.total-donors .view-details * {
+    color: #663398;
+}
+
+.total-donors .view-details {
+    border: 2px #663398 solid;
+    border-radius: 0 0 0.4rem 0.4rem;
+}
+
+.all-my-campaigns {
+    background-color: #fff;
+    box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    -webkit-box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    -moz-box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+}
+
+.all-my-campaigns p, .recent-donations p {
+    margin: 0;
+}
+
+.all-my-campaigns-text, .all-my-campaigns-main, .recent-donations-text, .recent-donations-main {
+    width: 96%;
+    padding: 1.5rem 2.2rem;
+    border-bottom: 2px #000 solid;
+}
+
+.all-my-campaigns-text p, .recent-donations-text p {
+    font-size: 1.3rem;
+}
+
+.all-my-campaigns-main, .recent-donations-main {
+    border: none;
+}
+
+.create-new-campaign {
+    position: relative;
+    text-decoration: none;
+    margin-top: 0.8rem;
+    padding: 1rem 2.2rem;
+    color: #fff;
+    background-color: #0033AD;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    z-index: 0;
+    transition: all 0.3s ease;
+}
+
+.create-new-campaign::before {
+    content: "";
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: -100%;
+    background-color: #fff;
+    z-index: -1;
+    transition: all 0.3s ease
+}
+
+.create-new-campaign:hover {
+    color: #0033AD;
+    transform: scale(1.1);
+    box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    -webkit-box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    -moz-box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    z-index: 2;
+}
+
+.create-new-campaign:hover::before {
+    left: 0;
+}
+
+.recent-donations {
+    background-color: #fff;
+    box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    -webkit-box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+    -moz-box-shadow: 1px 0px 9px 2px rgba(0,0,0,0.46);
+}
+
+.recent-donations-main {
+    padding: 0.8rem 2.2rem;
+}
+
+.recent-donations-main-category {
+    border-bottom: 2px #000 solid;
+}
+
+.recent-donations-main-category div {
+    flex: 1;
+}
+
+.recent-donations-main-category div p {
+    padding: 0 0.8rem;
+}
+
+.recent-donations-main > div {
+    padding: 0.8rem 0;
 }
 /* My campaigns */
