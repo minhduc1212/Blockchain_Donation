@@ -1,3 +1,25 @@
+/* Home */
+.ada-1 {
+    width: 3.5rem;
+    transform: scaleX(-1) rotate(20deg);
+}
+
+.ada-2 {
+    width: 8rem;
+    transform: scaleX(-1) rotate(-10deg);
+}
+
+.ada-3 {
+    width: 5.5rem;
+    transform: scaleX(-1) rotate(5deg);
+}
+
+.ada-4 {
+    width: 2rem;
+    transform: scaleX(-1) rotate(-90deg);
+}
+/* Home */
+
 /* New campaign */
 section {
     background-color: #F8F8F8;
@@ -406,6 +428,10 @@ h1 {
     display: flex;
     flex-direction: column;
     align-items: end;
+}
+
+.view-all-transaction-filter-button:hover i {
+    transform: rotate(180deg);
 }
 
 .view-all-transaction-filter-button li {

@@ -10,6 +10,13 @@
             integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
             crossorigin="anonymous"
         >
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+            integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        >
         <link rel="stylesheet" href="../css/base.css">
         <link rel="stylesheet" href="../css/layout.css">
         <link rel="stylesheet" href="../css/style.css">
@@ -18,10 +25,15 @@
         <header>
             <div class="container d-flex justify-content-between align-items-center">
                 <div class="header-logo">
-                    <a href="index.html"><img src="../assets/images/Logo.png" alt=""></a>
+                    <a href="index.html">
+                        <img src="../assets/images/Logo.png" alt="">
+                    </a>
                 </div>
                 <div class="header-nav">
                     <ul class="nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">Home</a>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" href="new_campaign.html">New Campaign</a>
                         </li>
@@ -31,13 +43,13 @@
                         <li class="nav-item">
                             <a class="nav-link" href="transaction.html">Transactions</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">Connect Wallet</a>
-                        </li>
                     </ul>
                 </div>
                 <div class="header-signin">
-                    <button class="signin">Sign In</button>
+                    <button class="signin">
+                        <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i>
+                        Connect Wallet
+                    </button>
                 </div>
             </div>
         </header>
@@ -48,12 +60,22 @@
                     <div class="name-description d-flex">
                         <div class="campaign-name">
                             <p>Campaign name</p>
-                            <input type="text" name="" id="" placeholder="Enter campaign name">
+                            <input
+                                type="text"
+                                name=""
+                                id=""
+                                placeholder="Enter campaign name"
+                            >
                             <p class="note">Choose a clear, specific title that explains your cause</p>
                         </div>
                         <div class="campaign-description">
                             <p>Description</p>
-                            <input type="text" name="" id="" placeholder="Enter description">
+                            <input
+                                type="text"
+                                name=""
+                                id=""
+                                placeholder="Enter description"
+                            >
                             <p class="note">Explain what the funds will be used for and why your cause matters</p>
                         </div>
                     </div>
@@ -61,22 +83,38 @@
                         <div class="start-date-and-time">
                             <p>PICK A START DATE AND TIME</p>
                             <div>
-                                <input type="date" name="" class="start-date" id="">
-                                <input type="time" name="" class="start-time" id="">
+                                <input
+                                    type="date"
+                                    name=""
+                                    class="start-date"
+                                    id=""
+                                >
+                                <input
+                                    type="time"
+                                    name=""
+                                    class="start-time"
+                                    id=""
+                                >
                             </div>
                         </div>
                         <div class="end-date-and-duration">
                             <p>END DATE</p>
                             <div>
                                 <input type="date" name="" id="">
-                                <p class="duration-time">Duration: </p>
+                                <p class="duration-time">Duration:</p>
                             </div>
                         </div>
                     </div>
                     <div class="donation-and-create d-flex align-items-end">
                         <div class="donate-amount">
                             <p>Goal amount</p>
-                            <input type="number" class="amount" name="" id="" placeholder="Enter amount">
+                            <input
+                                type="number"
+                                class="amount"
+                                name=""
+                                id=""
+                                placeholder="Enter amount"
+                            >
                         </div>
                         <div class="confirm-create">
                             <button class="create">Create campaign</button>
