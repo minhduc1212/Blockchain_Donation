@@ -1,4 +1,13 @@
 /* Home */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(20px);
+    }
+    50% {
+        transform: translateY(-40px);
+    }
+}
+
 .ada-1 {
     width: 3.5rem;
     transform: scaleX(-1) rotate(20deg);
@@ -17,6 +26,85 @@
 .ada-4 {
     width: 2rem;
     transform: scaleX(-1) rotate(-90deg);
+}
+
+.wrapper-1 {
+    position: absolute;
+    top: 60%;
+    left: 7%;
+    animation: float 3s ease-in-out infinite;
+}
+
+.wrapper-2 {
+    position: absolute;  
+    top: 20%;
+    left: 20%;
+    animation: float 4.5s ease-in-out infinite;
+}
+
+.wrapper-3 {
+    position: absolute;
+    top: 60%;
+    right: 30%;
+    animation: float 4s ease-in-out infinite;
+
+}
+
+.wrapper-4 {
+    position: absolute;
+    top: 20%;
+    right: 40%;
+    animation: float 2.5s ease-in-out infinite;
+}
+
+.banner-left {
+    position: relative;
+    width: 40%;
+}
+
+.banner-right {
+    width: 60%;
+}
+
+.banner-right h1 {
+    text-align: start;
+    font-size: 4rem;
+}
+
+.banner-right p {
+    font-size: 1.3rem;
+    font-family: Oswald-Light, sans-serif;
+}
+
+.banner-right a {
+    position: relative;
+    text-decoration: none;
+    color: #fff;
+    background-color: #0033AD;
+    border: 0.3rem #0033AD solid;
+    padding: 0.8rem 2.2rem;
+    overflow: hidden;
+    z-index: 0;
+}
+
+.banner-right a::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    z-index: -1;
+    transition: all 0.3s ease;
+}
+
+.banner-right a:hover::before {
+    left: 0;
+}
+
+.banner-right a:hover {
+    color: #0033AD;
 }
 /* Home */
 
