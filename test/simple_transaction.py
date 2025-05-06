@@ -54,7 +54,7 @@ print(payment_skey.to_verification_key())
 
 # --- Simple transaction: 2 ada to an address ---
 recipient_address_str = "addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj"
-amount_to_send = 2_000_000  # 2 ADA in lovelace
+amount_to_send = 2000000  # 2 ADA in lovelace
 api_key = "previewJhNPT5QxoI6h2TujleChtJ7qTxNZqSAZ"
 
 api_key = "previewJhNPT5QxoI6h2TujleChtJ7qTxNZqSAZ"  # Replace with your BlockFrost API key
@@ -85,8 +85,9 @@ try:
     builder = TransactionBuilder(context)
 
     # Add inputs from UTXOs 
-    print("utxo is: ", utxos[14])
-    builder.add_input(utxos[14])
+    print("utxo is: ", utxos[13])
+    builder.add_input(utxos[13])
+    print("Added input UTXO: ", utxos[13])
 
     # Add the output (recipient address and amount)
     recipient_address = Address.from_primitive(recipient_address_str)
@@ -96,12 +97,13 @@ try:
     print("Building and signing transaction...")
     # Change address nên là địa chỉ của người gửi để nhận lại tiền thừa
     signed_tx = builder.build_and_sign([payment_skey], change_address=sender_address)
-
+    print("signed tx is: ", signed_tx)
+    print("The signed tx to cbor is: ", signed_tx.to_cbor_hex())
     print("Submitting transaction...")
-    tx_id = context.submit_tx(signed_tx.to_cbor())
+    """tx_id = context.submit_tx(signed_tx.to_cbor())
     print(f"Transaction submitted successfully.")
     print(f"Transaction ID: {tx_id}")
-    print(f"Check on explorer (e.g., CExplorer for {network}): https://{network}.cexplorer.io/tx/{tx_id}")
+    print(f"Check on explorer (e.g., CExplorer for {network}): https://{network}.cexplorer.io/tx/{tx_id}")"""
 
 except ApiError as e:
     print(f"Blockfrost API Error: {e}")

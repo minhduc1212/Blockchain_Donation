@@ -48,9 +48,9 @@ NETWORK = "https://cardano-preview.blockfrost.io/api/"
 context = BlockFrostChainContext(BLOCKFROST_PROJECT_ID, base_url=NETWORK)
 
 # Sender and receiver addresses
-sender_address = "addr_test1qpq4mau3kcm2r993594pvgx3f6kcna660e5kwdm8vmezn6330vux49pazs2cnlr6ezuw20lvkzk06jvmyqf9skwrytfq8z2t9f"
+sender_address = "addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj"
 receiver_address = "addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj"
-fee_lovelace = 170000
+fee_lovelace = 168141
 send_amount_lovelace = 2000000
 
 input_tx_id_hex, input_tx_index, input_amount_lovelace  = get_utxo(send_amount_lovelace, fee_lovelace, sender_address, context)

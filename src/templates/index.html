@@ -152,13 +152,15 @@
 
             try {
                 // Sign the transaction using the wallet
+                console.log("Cbor hex: ", rawCborHex);
                 const signedTx = await walletApi.signTx(rawCborHex, true);
-                showStatus('Transaction signed successfully! Submitting...');
+                console.log('Transaction signed successfully! Submitting...');
+                console.log('Signed Transaction:', signedTx);
 
                 // Submit the signed transaction
-                const txHash = await walletApi.submitTx(signedTx);
-                showStatus(`Transaction submitted successfully! Tx Hash: ${txHash}`, false);
-                alert(`Transaction submitted successfully!\nTx Hash: ${txHash}`);
+                const txHash = await walletApi.submitTx("signedTx");
+                //showStatus(`Transaction submitted successfully! Tx Hash: ${txHash}`, false);
+                //lert(`Transaction submitted successfully!\nTx Hash: ${txHash}`);
             } catch (error) {
                 showStatus(`Error: ${error.message}`, true);
                 console.error(error);
