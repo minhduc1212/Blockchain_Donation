@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+            crossorigin="anonymous"
+        >
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+            integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        >
+        <link rel="stylesheet" href="../css/base.css">
+        <link rel="stylesheet" href="../css/layout.css">
+        <link rel="stylesheet" href="../css/style.css">
+    </head>
+    <body>
+        <header>
+            <div class="container d-flex justify-content-between align-items-center">
+                <div class="header-logo">
+                    <a href="index.html">
+                        <img src="../assets/images/Logo.png" alt="">
+                    </a>
+                </div>
+                <div class="header-nav">
+                    <ul class="nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="new_campaign.html">New Campaign</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="my_campaigns.html">My Campaigns</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="transaction.html">Transactions</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="header-connect-wallet" href="connect_wallet.html">
+                    <a class="connect-wallet">
+                        <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i>
+                        Connect Wallet
+                    </a>
+                </div>
+            </div>
+        </header>
+        <section class="connect-to-wallet">
+            <div class="container d-flex justify-content-center">
+                <div class="container-1" style="background-color: #fff; padding: 1rem 2rem;">
+                    <h1 style="margin-bottom: 1rem;">Connect Your Cardano Wallet</h1>
+                    <p class="text-center" style="font-family: Oswald-Light, sans-serif;">Connect your wallet to easily track donations and manage campaigns</p>
+                    <div id="walletInfoAlert">
+                        <h5 class="d-flex align-items-center"><i class="fa-solid fa-circle-info" style="margin-right: 1rem;"></i>Important Setup Information</h5>
+                        <p>Before connecting your wallet, please ensure you have:</p>
+                        <ol>
+                            <li>Installed one of the supported Cardano wallet extensions (Eternl, Nami, or Flint)</li>
+                            <li>Set up a DApp account in your wallet settings</li>
+                        </ol>
+                        <div class="mt-2">
+                            <strong>For Eternl users:</strong> Open your wallet, click the connection icon in the top-right, select your account, and click 'Connect As DApp Account'.
+                        </div>
+                    </div>
+                    <div class="wallet-options">
+                        <div class="eternl-wallet">
+                            <img src="../assets/images/eternl.png" alt="">
+                            <p>Eternl</p>
+                        </div>
+                        <div class="nami-wallet">
+                            <img src="../assets/images/nami.png" alt="">
+                            <p>Nami</p>
+                        </div>
+                        <div class="flint-wallet">
+                            <img src="../assets/images/flint.png" alt="">
+                            <p>Flint</p>
+                        </div>
+                    </div>
+                    <div id="manualEntrySection" class="mb-4">
+                        <hr>
+                        <h5 class="mb-3">Or enter your wallet address manually:</h5>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="manualAddress" placeholder="addr1...">
+                            <button class="btn btn-primary" type="button" onclick="saveManualAddress()">Save</button>
+                        </div>
+                        <div class="form-text">This address will be used to identify your donations and campaigns.</div>
+                    </div>
+                    <div>
+                        <a href="index.html" class="btn btn-outline-secondary w-100">Back to Home</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <footer class="py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Cardano Donation Platform</h5>
+                        <p style="font-family: Oswald-Light, sans-serif;">A transparent way to donate using blockchain technology</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h5>Links</h5>
+                        <ul class="list-unstyled">
+                            <li>
+                                <a href="index.html" class="text-decoration-none text-secondary">Home</a>
+                            </li>
+                            <li>
+                                <a href="new_campaign.html" class="text-decoration-none text-secondary">New Campaign</a>
+                            </li>
+                            <li>
+                                <a href="my_campaigns.html" class="text-decoration-none text-secondary">My campaigns</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h5>Connect</h5>
+                        <div class="d-flex gap-3 fs-4">
+                            <a href="#" class="text-secondary">
+                                <i class="fa-brands fa-x-twitter"></i>
+                            </a>
+                            <a href="#" class="text-secondary">
+                                <i class="fa-brands fa-github"></i>
+                            </a>
+                            <a href="#" class="text-secondary">
+                                <i class="fa-brands fa-telegram"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <p class="mb-0">&copy; 2023 Cardano Donation Platform. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    </body>
+</html>

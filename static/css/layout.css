@@ -1,0 +1,39 @@
+.container {
+    width: 80%;
+}
+
+.container-1 {
+    width: 95%;
+}
+
+/* Header */
+header {
+    padding: 1.5rem 0;
+}
+
+.header-logo img {
+    width: 15rem;
+}
+
+.header-nav a {
+    color: #000000;
+}
+
+.header-connect-wallet .connect-wallet {
+    text-decoration: none;
+    font-size: 1rem;
+    color: #ffffff;
+    background-color: #0033AD;
+    padding: 0.8rem 2.5rem;
+    border: none;
+    border-radius: 0.3rem;
+    cursor: pointer;
+}
+
+.header-connect-wallet .connect-wallet:hover {
+    background-color: #325cbe;
+}
+
+footer i {
+    font-size: 1.5rem;
+}

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+            crossorigin="anonymous"
+        >
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+            integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        >
+        <link rel="stylesheet" href="../css/base.css">
+        <link rel="stylesheet" href="../css/layout.css">
+        <link rel="stylesheet" href="../css/style.css">
+    </head>
+    <body>
+        <header>
+            <div class="container d-flex justify-content-between align-items-center">
+                <div class="header-logo">
+                    <a href="index.html">
+                        <img src="../assets/images/Logo.png" alt="">
+                    </a>
+                </div>
+                <div class="header-nav">
+                    <ul class="nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="index.html">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="new_campaign.html">New Campaign</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="my_campaigns.html">My Campaigns</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="transaction.html">Transactions</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="header-connect-wallet" href="connect_wallet.html">
+                    <a class="connect-wallet">
+                        <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i>
+                        Connect Wallet
+                    </a>
+                </div>
+            </div>
+        </header>
+        <section class="my_campaigns">
+            <div class="container d-flex justify-content-center">
+                <div class="container-1 d-flex flex-column">
+                    <h1>All my campaigns</h1>
+                    <div class="total-campaigns-and-donate-and-donors">
+                        <div class="total-campaigns">
+                            <div class="total-campaigns-main">
+                                <div class="total-campaigns-main-left">
+                                    <i class="fa-solid fa-tents" style="font-size: 3.5rem; color: #fff;"></i>
+                                </div>
+                                <div class="total-campaigns-main-right">
+                                    <p class="total-campaigns-main-right-top">0</p>
+                                    <p class="total-campaigns-main-right-bottom">Campaigns</p>
+                                </div>
+                            </div>
+                            <div class="view-details">
+                                <p>View details</p>
+                                <i class="fa-regular fa-circle-right"></i>
+                            </div>
+                        </div>
+                        <div class="total-donate">
+                            <div class="total-donate-main">
+                                <div class="total-donate-main-left">
+                                    <img src="../assets/images/reversed_logo.png" alt="" style="width: 50%;">
+                                </div>
+                                <div class="total-donate-main-right">
+                                    <p class="total-donate-main-right-top">0</p>
+                                    <p class="total-donate-main-right-bottom">ADA</p>
+                                </div>
+                            </div>
+                            <div class="view-details">
+                                <p>View details</p>
+                                <i class="fa-regular fa-circle-right"></i>
+                            </div>
+                        </div>
+                        <div class="total-donors">
+                            <div class="total-donors-main">
+                                <div class="total-donors-main-left">
+                                    <i class="fa-solid fa-users" style="font-size: 3.5rem; color: #fff;"></i>
+                                </div>
+                                <div class="total-donors-main-right">
+                                    <p class="total-donors-main-right-top">0</p>
+                                    <p class="total-donors-main-right-bottom">Donors</p>
+                                </div>
+                            </div>
+                            <div class="view-details">
+                                <p>View details</p>
+                                <i class="fa-regular fa-circle-right"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="all-my-campaigns d-flex flex-column align-items-center">
+                        <div class="all-my-campaigns-text">
+                            <p>My campaigns</p>
+                        </div>
+                        <div class="all-my-campaigns-main">
+                            <div class="d-flex flex-column align-items-center">
+                                <p>You haven't created any campaigns yet.</p>
+                                <a class="create-new-campaign" href="new_campaign.html">Create your first campaign</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="recent-donations d-flex flex-column align-items-center">
+                        <div class="recent-donations-text">
+                            <p>Recent donations</p>
+                        </div>
+                        <div class="recent-donations-main">
+                            <div class="recent-donations-main-category d-flex">
+                                <div>
+                                    <p>Campaign</p>
+                                </div>
+                                <div>
+                                    <p>Donor</p>
+                                </div>
+                                <div>
+                                    <p>Amount</p>
+                                </div>
+                                <div>
+                                    <p>Date</p>
+                                </div>
+                                <div>
+                                    <p>Transaction</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-center">No donations received yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <footer class="py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Cardano Donation Platform</h5>
+                        <p style="font-family: Oswald-Light, sans-serif;">A transparent way to donate using blockchain technology</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h5>Links</h5>
+                        <ul class="list-unstyled">
+                            <li>
+                                <a href="index.html" class="text-decoration-none text-secondary">Home</a>
+                            </li>
+                            <li>
+                                <a href="new_campaign.html" class="text-decoration-none text-secondary">New Campaign</a>
+                            </li>
+                            <li>
+                                <a href="my_campaigns.html" class="text-decoration-none text-secondary">My campaigns</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h5>Connect</h5>
+                        <div class="d-flex gap-3 fs-4">
+                            <a href="#" class="text-secondary">
+                                <i class="fa-brands fa-x-twitter"></i>
+                            </a>
+                            <a href="#" class="text-secondary">
+                                <i class="fa-brands fa-github"></i>
+                            </a>
+                            <a href="#" class="text-secondary">
+                                <i class="fa-brands fa-telegram"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <p class="mb-0">&copy; 2023 Cardano Donation Platform. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    </body>
+</html>
