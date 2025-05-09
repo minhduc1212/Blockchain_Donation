@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Community | Cardano Donation Platform</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
+            crossorigin="anonymous"
+        >
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+            integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+        >
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <style>
+            .community-card {
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                padding: 20px;
+                margin-bottom: 20px;
+                background-color: #fff;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+                transition: transform 0.3s ease;
+            }
+            
+            .community-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            }
+            
+            .community-card h3 {
+                margin-bottom: 12px;
+                color: #333;
+            }
+            
+            .community-card p {
+                color: #666;
+                line-height: 1.6;
+                white-space: pre-wrap;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+                max-width: 100%;
+            }
+            
+            .community-meta {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 15px;
+                color: #888;
+                font-size: 0.9em;
+            }
+            
+            .tag {
+                background-color: #e3f2fd;
+                color: #1976d2;
+                padding: 4px 8px;
+                border-radius: 4px;
+                font-size: 0.8em;
+            }
+            
+            .new-post-container {
+                background-color: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin-bottom: 30px;
+            }
+
+            .post-image {
+                max-width: 100%;
+                height: auto;
+                border-radius: 6px;
+                margin-top: 15px;
+                margin-bottom: 15px;
+            }
+
+            .image-preview {
+                max-width: 300px;
+                max-height: 200px;
+                margin-top: 10px;
+                border-radius: 6px;
+                display: none;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="container d-flex justify-content-between align-items-center">
+                <div class="header-logo">
+                    <a href="{{ url_for('index') }}">
+                        <img src="../static/assets/images/Logo.png" alt="">
+                    </a>
+                </div>
+                <div class="header-nav">
+                    <ul class="nav">
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('index') }}">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('new_campaign') }}">New Campaign</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('my_campaigns') }}">My Campaigns</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('transaction') }}">Transactions</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{{ url_for('community') }}">Community</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="header-connect-wallet" id="wallet-connect-container">
+                    <a class="connect-wallet" href="{{ url_for('connect_wallet') }}">
+                        <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i>
+                        Connect Wallet
+                    </a>
+                </div>
+            </div>
+        </header>
+        
+        <div class="container mt-5 mb-5">
+            <div class="row">
+                <div class="col-md-8">
+                    <h1 class="mb-4">Community Ideas</h1>
+                    <p class="lead mb-5">Connect with other members of the Cardano community to discuss campaign ideas and potential collaborations.</p>
+                    
+                    <div class="new-post-container" id="new-post-form">
+                        <h3 class="mb-3">Share Your Campaign Idea</h3>
+                        <div class="mb-3">
+                            <label for="post-title" class="form-label">Title</label>
+                            <input type="text" class="form-control" id="post-title" placeholder="Enter a title for your idea">
+                        </div>
+                        <div class="mb-3">
+                            <label for="post-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="post-description" rows="4" placeholder="Describe your campaign idea and what support you're looking for"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="post-image" class="form-label">Add an Image (optional)</label>
+                            <input type="file" class="form-control" id="post-image" accept="image/*">
+                            <img id="image-preview" class="image-preview mt-2" alt="Image preview" />
+                        </div>
+                        <button class="btn btn-primary" id="submit-post-btn">Share Idea</button>
+                    </div>
+                    
+                    <div id="community-posts-container">
+                        <!-- Community posts will be loaded here -->
+                        <div class="text-center my-5">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading community posts...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Community Guidelines</h5>
+                        </div>
+                        <div class="card-body">
+                            <ul class="mb-0">
+                                <li>Share campaign ideas that could benefit from community funding</li>
+                                <li>Be respectful and considerate in your communications</li>
+                                <li>Provide clear details about your funding needs</li>
+                                <li>Respond to questions and feedback</li>
+                                <li>Follow through on commitments if your idea receives support</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="card mt-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">Benefits of Community Campaigns</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>By sharing your campaign ideas with the community:</p>
+                            <ul class="mb-0">
+                                <li>Receive feedback to refine your concept</li>
+                                <li>Connect with potential contributors</li>
+                                <li>Gain visibility for your cause</li>
+                                <li>Find collaborators with complementary skills</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="py-4">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Cardano Donation Platform</h5>
+                        <p style="font-family: Oswald-Light, sans-serif;">A transparent way to donate using blockchain technology</p>
+                    </div>
+                    <div class="col-md-3">
+                        <h5>Links</h5>
+                        <ul class="list-unstyled">
+                            <li>
+                                <a href="{{ url_for('index') }}" class="text-decoration-none text-secondary">Home</a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('new_campaign') }}" class="text-decoration-none text-secondary">New Campaign</a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('my_campaigns') }}" class="text-decoration-none text-secondary">My campaigns</a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('community') }}" class="text-decoration-none text-secondary">Community</a>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-3">
+                        <h5>Connect</h5>
+                        <div class="d-flex gap-3 fs-4">
+                            <a href="#" class="text-secondary">
+                                <i class="fa-brands fa-x-twitter"></i>
+                            </a>
+                            <a href="#" class="text-secondary">
+                                <i class="fa-brands fa-github"></i>
+                            </a>
+                            <a href="#" class="text-secondary">
+                                <i class="fa-brands fa-telegram"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <p class="mb-0">&copy; 2023 Cardano Donation Platform. All rights reserved.</p>
+                </div>
+            </div>
+        </footer>
+        
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <script src="{{ url_for('static', filename='js/wallet-info.js') }}"></script>
+        
+        <!-- Notification container for toast messages -->
+        <div id="notification-container" style="position: fixed; top: 20px; right: 20px; z-index: 1050; max-width: 350px;"></div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Check if wallet is connected
+                checkWalletConnection();
+                
+                // Load community posts
+                loadCommunityPosts();
+                
+                // Add event listener for submitting a new post
+                document.getElementById('submit-post-btn').addEventListener('click', submitNewPost);
+                
+                // Add event listener for image preview
+                document.getElementById('post-image').addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        const preview = document.getElementById('image-preview');
+                        
+                        reader.onload = function(e) {
+                            preview.src = e.target.result;
+                            preview.style.display = 'block';
+                        };
+                        
+                        reader.readAsDataURL(file);
+                    } else {
+                        document.getElementById('image-preview').style.display = 'none';
+                    }
+                });
+            });
+            
+            function checkWalletConnection() {
+                const storedAddress = localStorage.getItem('sender_address');
+                const walletConnectContainer = document.getElementById('wallet-connect-container');
+                
+                if (storedAddress) {
+                    // Update wallet connection button if wallet is connected
+                    walletConnectContainer.innerHTML = `
+                        <a class="connect-wallet connected-wallet" href="{{ url_for('connect_wallet') }}">
+                            <i class="fa-solid fa-wallet"></i>
+                            Connected: ${storedAddress.substring(0, 10)}...
+                        </a>
+                    `;
+                } else {
+                    // Hide the new post form if wallet is not connected
+                    document.getElementById('new-post-form').innerHTML = `
+                        <div class="alert alert-warning" role="alert">
+                            <h4 class="alert-heading">Connect Your Wallet</h4>
+                            <p>You need to connect your wallet to share campaign ideas with the community.</p>
+                            <hr>
+                            <a href="{{ url_for('connect_wallet') }}" class="btn btn-primary">Connect Wallet</a>
+                        </div>
+                    `;
+                }
+            }
+            
+            function showNotification(type, title, message) {
+                // Create notification container if it doesn't exist
+                let notificationContainer = document.getElementById('notification-container');
+                
+                // Create the notification
+                const notification = document.createElement('div');
+                notification.className = 'toast show';
+                notification.style.cssText = `
+                    background-color: #ffffff;
+                    border-left: 4px solid ${type === 'success' ? '#28a745' : (type === 'error' ? '#dc3545' : '#17a2b8')};
+                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                    margin-bottom: 10px;
+                `;
+                
+                notification.innerHTML = `
+                    <div class="toast-header">
+                        <i class="fa-solid ${type === 'success' ? 'fa-circle-check text-success' : 
+                                          (type === 'error' ? 'fa-circle-exclamation text-danger' : 'fa-circle-info text-info')} me-2"></i>
+                        <strong class="me-auto">${title}</strong>
+                        <small>just now</small>
+                        <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+                    </div>
+                    <div class="toast-body">
+                        <p class="mb-0">${message}</p>
+                    </div>
+                `;
+                
+                // Add to container
+                notificationContainer.appendChild(notification);
+                
+                // Remove after 5 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 5000);
+            }
+            
+            function loadCommunityPosts() {
+                fetch('/api/community_posts')
+                    .then(response => response.json())
+                    .then(posts => {
+                        const postsContainer = document.getElementById('community-posts-container');
+                        
+                        if (posts.length === 0) {
+                            postsContainer.innerHTML = `
+                                <div class="alert alert-info" role="alert">
+                                    No community posts yet. Be the first to share your campaign idea!
+                                </div>
+                            `;
+                            return;
+                        }
+                        
+                        const postsHTML = posts.map(post => {
+                            const date = new Date(post.created_at);
+                            const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                            
+                            // Format the author address to show only beginning and end
+                            const authorAddress = post.author;
+                            let formattedAuthor = authorAddress;
+                            
+                            // Check if the address is long enough to truncate
+                            if (authorAddress && authorAddress.length > 15) {
+                                const start = authorAddress.substring(0, 8);
+                                const end = authorAddress.substring(authorAddress.length - 6);
+                                formattedAuthor = `${start}....${end}`;
+                            }
+                            
+                            // Check if post has an image
+                            const imageHtml = post.image_url ? 
+                                `<img src="${post.image_url}" alt="${post.title}" class="post-image">` : 
+                                '';
+                            
+                            return `
+                                <div class="community-card">
+                                    <h3>${post.title}</h3>
+                                    ${imageHtml}
+                                    <p>${post.description}</p>
+                                    <div class="community-meta">
+                                        <span>Posted by: ${formattedAuthor}</span>
+                                        <span>${formattedDate}</span>
+                                    </div>
+                                    <div class="mt-3">
+                                        <span class="tag">${post.type.replace('_', ' ')}</span>
+                                        <button class="btn btn-sm btn-outline-primary float-end" onclick="respondToPost(${post.id})">Respond</button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                        
+                        postsContainer.innerHTML = postsHTML;
+                    })
+                    .catch(error => {
+                        console.error('Error loading community posts:', error);
+                        document.getElementById('community-posts-container').innerHTML = `
+                            <div class="alert alert-danger" role="alert">
+                                Error loading community posts. Please try again later.
+                            </div>
+                        `;
+                    });
+            }
+            
+            function submitNewPost() {
+                const title = document.getElementById('post-title').value;
+                const description = document.getElementById('post-description').value;
+                const walletAddress = localStorage.getItem('sender_address');
+                const imageFile = document.getElementById('post-image').files[0];
+                
+                if (!walletAddress) {
+                    showNotification('error', 'Wallet Required', 'Please connect your wallet to submit a post');
+                    return;
+                }
+                
+                if (!title || !description) {
+                    showNotification('error', 'Missing Information', 'Please fill in both title and description');
+                    return;
+                }
+                
+                // Create form data for multipart/form-data submission (for image)
+                const formData = new FormData();
+                formData.append('title', title);
+                formData.append('description', description);
+                formData.append('author', walletAddress);
+                formData.append('type', 'campaign_idea');
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                }
+                
+                // Show loading state
+                const submitBtn = document.getElementById('submit-post-btn');
+                const originalBtnText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+                
+                // Submit post to the server
+                fetch('/api/community_posts', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(data => {
+                            throw new Error(data.error || 'Failed to post your idea');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Show success message
+                    showNotification('success', 'Post Submitted', 'Your campaign idea has been shared with the community!');
+                    
+                    // Clear the form
+                    document.getElementById('post-title').value = '';
+                    document.getElementById('post-description').value = '';
+                    document.getElementById('post-image').value = '';
+                    document.getElementById('image-preview').style.display = 'none';
+                    
+                    // Reload posts to show the new one
+                    loadCommunityPosts();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('error', 'Submission Failed', error.message);
+                })
+                .finally(() => {
+                    // Reset button state
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                });
+            }
+            
+            function respondToPost(postId) {
+                const walletAddress = localStorage.getItem('sender_address');
+                
+                if (!walletAddress) {
+                    showNotification('error', 'Wallet Required', 'Please connect your wallet to respond to posts');
+                    return;
+                }
+                
+                // For demonstration purposes, just show a notification
+                showNotification('info', 'Response Feature', `You are responding to post #${postId}. In a full implementation, this would open a direct message or comment form.`);
+            }
+        </script>
+    </body>
+</html> 

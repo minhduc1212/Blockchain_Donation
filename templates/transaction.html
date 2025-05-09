@@ -20,6 +20,7 @@
         <link rel="stylesheet" href="../static/css/base.css">
         <link rel="stylesheet" href="../static/css/layout.css">
         <link rel="stylesheet" href="../static/css/style.css">
+        <link rel="stylesheet" href="../static/css/custom.css">
     </head>
     <body>
         <header>
@@ -41,11 +42,14 @@
                             <a class="nav-link" href="{{ url_for('my_campaigns') }}">My Campaigns</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('transaction') }}">Transactions</a>
+                            <a class="nav-link active" href="{{ url_for('transaction') }}">Transactions</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('community') }}">Community</a>
                         </li>
                     </ul>
                 </div>
-                <div class="header-connect-wallet">
+                <div class="header-connect-wallet" id="wallet-connect-container">
                     <a class="connect-wallet" href="{{ url_for('connect_wallet') }}">
                         <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i>
                         Connect Wallet
@@ -53,9 +57,43 @@
                 </div>
             </div>
         </header>
+        
+        <!-- Notification container for toast messages -->
+        <div id="notification-container" style="position: fixed; top: 20px; right: 20px; z-index: 1050; max-width: 350px;"></div>
         <section>
             <div class="container d-flex justify-content-center">
                 <div class="container-1">
+                    <div id="donation-form" style="display:none;">
+                        <h1 style="margin: 0.8rem;">Complete Your Donation</h1>
+                        <div class="alert alert-info">
+                            <p>To complete your donation, please follow these steps:</p>
+                            <ol>
+                                <li>Review your donation details below</li>
+                                <li>Copy the transaction hash after you've sent ADA to the donation address</li>
+                                <li>Submit the transaction hash to verify your donation</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0">Donation Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="donation-details">
+                                    <!-- Donation details will be loaded here -->
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <div class="mb-3">
+                                        <label for="tx-hash" class="form-label">Transaction Hash</label>
+                                        <input type="text" class="form-control" id="tx-hash" placeholder="Enter the transaction hash after sending ADA">
+                                    </div>
+                                    <button class="btn btn-primary" onclick="verifyTransaction()">Verify Transaction</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <h1 style="margin: 0.8rem;">Transaction History</h1>
                     <p style="margin-bottom: 3rem;text-align: center; font-family: Oswald-Light, sans-serif;">View all blockchain transactions for complete transparency.</p>
                     <div class="view-all-transaction">
@@ -77,8 +115,8 @@
                                 </ul>
                             </div>
                         </div>
-                        <div class="view-all-transaction-main">
-                            <div class="no-transaction">
+                        <div class="view-all-transaction-main" id="transactions-container">
+                            <div class="no-transaction" id="no-transactions-message">
                                 <i class="fa-solid fa-receipt"></i>
                                 <p>No Transactions Yet</p>
                                 <p>Transactions will appear here when donations are made or funds are withdrawn</p>
@@ -135,6 +173,7 @@
             </div>
         </footer>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <script src="{{ url_for('static', filename='js/wallet-info.js') }}"></script>
         <script
             src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"
             integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
@@ -142,9 +181,233 @@
             referrerpolicy="no-referrer"
         ></script>
         <script>
-            // $('.view-all-transaction-filter-button').click(function() {
-            //     $('.view-all-transaction-filter-button ul').toggleClass('active')
-            // })
+            document.addEventListener('DOMContentLoaded', function() {
+                // Check if we have donation data in localStorage
+                const donationData = localStorage.getItem('donation_tx_data');
+                const urlParams = new URLSearchParams(window.location.search);
+                const campaignId = urlParams.get('campaign_id');
+                
+                // Check if wallet is connected
+                const storedAddress = localStorage.getItem('sender_address');
+                if (storedAddress) {
+                    // Update wallet connection display
+                    updateWalletDisplay(storedAddress);
+                }
+                
+                // If we have campaign_id in the URL and donation data, show the donation form
+                if (campaignId && donationData) {
+                    document.getElementById('donation-form').style.display = 'block';
+                    loadDonationDetails(JSON.parse(donationData), campaignId);
+                } else {
+                    // Otherwise, load transaction history
+                    loadTransactionHistory();
+                }
+                
+                // Add event listener for filter dropdown
+                $('.view-all-transaction-filter-button').click(function() {
+                    $('.view-all-transaction-filter-button ul').toggleClass('active');
+                });
+            });
+            
+            function loadDonationDetails(donationData, campaignId) {
+                fetch(`/api/campaigns/${campaignId}`)
+                    .then(response => response.json())
+                    .then(campaign => {
+                        const formattedAmount = (donationData.amount / 1000000).toFixed(2);
+                        
+                        const donationDetailsHtml = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Campaign:</h6>
+                                    <p>${campaign.title}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Amount:</h6>
+                                    <p>${formattedAmount} ADA</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <h6>Recipient Wallet Address:</h6>
+                                    <p class="text-break"><small>${campaign.wallet_address}</small></p>
+                                </div>
+                            </div>
+                        `;
+                        
+                        document.getElementById('donation-details').innerHTML = donationDetailsHtml;
+                    })
+                    .catch(error => {
+                        console.error('Error loading campaign details:', error);
+                    });
+            }
+            
+            function verifyTransaction() {
+                const txHash = document.getElementById('tx-hash').value;
+                
+                if (!txHash) {
+                    showNotification('error', 'Missing Information', 'Please enter a transaction hash');
+                    return;
+                }
+                
+                const donationData = JSON.parse(localStorage.getItem('donation_tx_data'));
+                
+                // Verify the transaction
+                fetch('/api/verify_transaction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tx_hash: txHash,
+                        amount: donationData.amount,
+                        campaign_id: donationData.campaign_id,
+                        donor_address: donationData.donor_address
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification('success', 'Donation Verified', 'Your donation has been verified successfully!');
+                        // Remove the donation data from localStorage
+                        localStorage.removeItem('donation_tx_data');
+                        // Redirect to the campaign page after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = `/campaign/${donationData.campaign_id}`;
+                        }, 2000);
+                    } else {
+                        showNotification('error', 'Verification Failed', data.message || 'Error verifying donation');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('error', 'Verification Error', error.message || 'Error verifying donation');
+                });
+            }
+            
+            function loadTransactionHistory() {
+                const storedAddress = localStorage.getItem('sender_address');
+                
+                if (!storedAddress) {
+                    return;
+                }
+                
+                fetch(`/api/donations/user/${storedAddress}`)
+                    .then(response => response.json())
+                    .then(transactions => {
+                        const transactionsContainer = document.getElementById('transactions-container');
+                        const noTransactionsMessage = document.getElementById('no-transactions-message');
+                        
+                        if (transactions.length > 0) {
+                            // Hide the no transactions message
+                            noTransactionsMessage.style.display = 'none';
+                            
+                            // Create transaction table
+                            const transactionsHtml = `
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Campaign</th>
+                                            <th>Amount (ADA)</th>
+                                            <th>Transaction ID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${transactions.map(tx => {
+                                            const date = new Date(tx.created_at);
+                                            const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                                            const formattedAmount = (tx.amount / 1000000).toFixed(2);
+                                            const shortenedTxId = `${tx.transaction_id.substring(0, 10)}...${tx.transaction_id.substring(tx.transaction_id.length - 10)}`;
+                                            
+                                            return `
+                                                <tr>
+                                                    <td>${formattedDate}</td>
+                                                    <td>
+                                                        <a href="/campaign/${tx.campaign_id}" class="campaign-link" data-campaign-id="${tx.campaign_id}">
+                                                            Campaign #${tx.campaign_id}
+                                                        </a>
+                                                    </td>
+                                                    <td>${formattedAmount} ADA</td>
+                                                    <td>
+                                                        <a href="https://preview.cardanoscan.io/transaction/${tx.transaction_id}" target="_blank">
+                                                            ${shortenedTxId}
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            `;
+                            
+                            transactionsContainer.innerHTML = transactionsHtml;
+                            
+                            // Fetch campaign titles
+                            const campaignLinks = document.querySelectorAll('.campaign-link');
+                            campaignLinks.forEach(link => {
+                                const campaignId = link.getAttribute('data-campaign-id');
+                                fetch(`/api/campaigns/${campaignId}`)
+                                    .then(response => response.json())
+                                    .then(campaign => {
+                                        link.textContent = campaign.title;
+                                    })
+                                    .catch(error => {
+                                        console.error(`Error loading campaign ${campaignId}:`, error);
+                                    });
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading transactions:', error);
+                    });
+            }
+            
+            function updateWalletDisplay(address) {
+                document.getElementById('wallet-connect-container').innerHTML = `
+                    <a class="connect-wallet connected-wallet" href="{{ url_for('connect_wallet') }}">
+                        <i class="fa-solid fa-wallet"></i>
+                        Connected: ${address.substring(0, 10)}...
+                    </a>
+                `;
+            }
+            
+            function showNotification(type, title, message) {
+                // Create notification container if it doesn't exist
+                let notificationContainer = document.getElementById('notification-container');
+                
+                // Create the notification
+                const notification = document.createElement('div');
+                notification.className = 'toast show';
+                notification.style.cssText = `
+                    background-color: #ffffff;
+                    border-left: 4px solid ${type === 'success' ? '#28a745' : '#dc3545'};
+                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                    margin-bottom: 10px;
+                `;
+                
+                notification.innerHTML = `
+                    <div class="toast-header">
+                        <i class="fa-solid ${type === 'success' ? 'fa-circle-check text-success' : 'fa-circle-exclamation text-danger'} me-2"></i>
+                        <strong class="me-auto">${title}</strong>
+                        <small>just now</small>
+                        <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+                    </div>
+                    <div class="toast-body">
+                        <p class="mb-0">${message}</p>
+                    </div>
+                `;
+                
+                // Add to container
+                notificationContainer.appendChild(notification);
+                
+                // Remove after 5 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 5000);
+            }
         </script>
     </body>
 </html>

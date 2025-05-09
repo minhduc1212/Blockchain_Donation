@@ -1,0 +1,245 @@
+/* Custom CSS for Blockchain Donation Platform */
+
+/* Wallet Connection Button */
+.connect-wallet {
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, #3a86ff, #0077b6);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.connect-wallet:hover {
+    background: linear-gradient(135deg, #0077b6, #023e8a);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+    color: #fff;
+}
+
+.connect-wallet i {
+    margin-right: 8px;
+    font-size: 1.1em;
+}
+
+.connected-wallet {
+    background-color: #28a745;
+    color: white;
+    transition: background-color 0.3s;
+}
+
+.connected-wallet:hover {
+    background-color: #218838;
+    color: white;
+}
+
+.wallet-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.wallet-dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: white;
+    min-width: 250px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 5px;
+}
+
+.wallet-dropdown:hover .wallet-dropdown-content {
+    display: block;
+}
+
+.wallet-info-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #f1f1f1;
+    padding-bottom: 8px;
+}
+
+.wallet-info-item:last-child {
+    margin-bottom: 0;
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.wallet-info-label {
+    font-weight: bold;
+    color: #6c757d;
+}
+
+.wallet-info-value {
+    font-family: monospace;
+}
+
+.wallet-address-copy {
+    cursor: pointer;
+    margin-left: 5px;
+    color: #6c757d;
+}
+
+.wallet-address-copy:hover {
+    color: #0d6efd;
+}
+
+/* Campaign Cards */
+.campaign-card {
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    margin-bottom: 30px;
+    background-color: #fff;
+}
+
+.campaign-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+}
+
+.campaign-image {
+    height: 200px;
+    overflow: hidden;
+}
+
+.campaign-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.campaign-card:hover .campaign-image img {
+    transform: scale(1.05);
+}
+
+.campaign-details {
+    padding: 20px;
+}
+
+.campaign-details h3 {
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: #333;
+    font-size: 1.3rem;
+}
+
+.campaign-details p {
+    color: #666;
+    margin-bottom: 15px;
+}
+
+.progress {
+    height: 10px;
+    border-radius: 5px;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, #3a86ff, #0077b6);
+}
+
+/* Button Styles */
+.btn-primary {
+    background: linear-gradient(135deg, #3a86ff, #0077b6);
+    border: none;
+    border-radius: 5px;
+    padding: 8px 16px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #0077b6, #023e8a);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Success Toast Notification */
+.toast {
+    border-radius: 8px;
+    overflow: hidden;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.toast.show {
+    display: block;
+    opacity: 1;
+}
+
+/* Header Navigation */
+.header-nav .nav-link {
+    color: #333;
+    font-weight: 500;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+}
+
+.header-nav .nav-link:hover, 
+.header-nav .nav-link.active {
+    color: #0077b6;
+    background-color: rgba(58, 134, 255, 0.1);
+    border-radius: 5px;
+}
+
+/* Form Elements */
+.form-control:focus {
+    border-color: #3a86ff;
+    box-shadow: 0 0 0 0.25rem rgba(58, 134, 255, 0.25);
+}
+
+textarea.form-control {
+    min-height: 120px;
+}
+
+/* Community Page */
+.community-card {
+    transition: all 0.3s ease;
+}
+
+.community-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Media Queries */
+@media (max-width: 768px) {
+    .connect-wallet {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+    
+    .campaign-image {
+        height: 160px;
+    }
+}
+
+@media (max-width: 576px) {
+    .header-nav .nav {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+} 

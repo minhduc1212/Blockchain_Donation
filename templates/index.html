@@ -20,6 +20,7 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     </head>
     <body>
         <header>
@@ -43,9 +44,12 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('transaction') }}">Transactions</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('community') }}">Community</a>
+                        </li>
                     </ul>
                 </div>
-                <div class="header-connect-wallet">
+                <div class="header-connect-wallet" id="wallet-connect-container">
                     <a class="connect-wallet" href="{{ url_for('connect_wallet') }}">
                         <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i>
                         Connect Wallet
@@ -82,8 +86,9 @@
             <div class="container d-flex justify-content-center">
                 <div class="container-1">
                     <p class="active-campaigns-text">Active campaigns</p>
-                    <div class="active-campaigns-main">
-                        <div class="no-campaign d-flex flex-column align-items-center">
+                    <div class="active-campaigns-main" id="campaigns-container">
+                        <!-- Campaign cards will be loaded here -->
+                        <div class="no-campaign d-flex flex-column align-items-center" id="no-campaigns-message">
                             <p>No campaigns available yet</p>
                             <a href="{{ url_for('new_campaign') }}">Create the first campaign</a>
                         </div>
@@ -146,5 +151,74 @@
             </div>
         </footer>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <script src="{{ url_for('static', filename='js/wallet-info.js') }}"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Check wallet connection
+                checkWalletConnection();
+                
+                // Load campaigns
+                loadCampaigns();
+            });
+            
+            function checkWalletConnection() {
+                const storedAddress = localStorage.getItem('sender_address');
+                if (storedAddress) {
+                    // Update wallet connection button
+                    document.getElementById('wallet-connect-container').innerHTML = `
+                        <a class="connect-wallet connected-wallet" href="{{ url_for('connect_wallet') }}">
+                            <i class="fa-solid fa-wallet"></i>
+                            Connected: ${storedAddress.substring(0, 10)}...
+                        </a>
+                    `;
+                }
+            }
+
+            function loadCampaigns() {
+                fetch('/api/campaigns')
+                    .then(response => response.json())
+                    .then(campaigns => {
+                        const campaignsContainer = document.getElementById('campaigns-container');
+                        const noCampaignsMessage = document.getElementById('no-campaigns-message');
+                        
+                        if (campaigns.length > 0) {
+                            // Hide the no campaigns message
+                            noCampaignsMessage.style.display = 'none';
+                            
+                            // Create campaign cards
+                            const campaignCardsHtml = campaigns.map(campaign => {
+                                const progress = (campaign.current_amount / campaign.goal_amount) * 100;
+                                const formattedCurrentAmount = (campaign.current_amount / 1000000).toFixed(2);
+                                const formattedGoalAmount = (campaign.goal_amount / 1000000).toFixed(2);
+                                
+                                return `
+                                    <div class="campaign-card">
+                                        <div class="campaign-image">
+                                            <img src="${campaign.image_url || '../static/assets/images/default-campaign.jpg'}" alt="${campaign.title}">
+                                        </div>
+                                        <div class="campaign-details">
+                                            <h3>${campaign.title}</h3>
+                                            <p>${campaign.description.substring(0, 100)}${campaign.description.length > 100 ? '...' : ''}</p>
+                                            <div class="progress mb-3">
+                                                <div class="progress-bar" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>${formattedCurrentAmount} / ${formattedGoalAmount} ADA</span>
+                                                <span>${progress.toFixed(1)}%</span>
+                                            </div>
+                                            <a href="/campaign/${campaign.id}" class="btn btn-primary mt-3">View Details</a>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+                            
+                            campaignsContainer.innerHTML = campaignCardsHtml;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading campaigns:', error);
+                    });
+            }
+        </script>
     </body>
 </html>

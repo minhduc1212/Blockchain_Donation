@@ -1,0 +1,90 @@
+build web 3 with flask 
+use blockfrost
+use wallet eternl to connect and interact
+ở phần code : # Receiver address
+receiver_address = "addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj"
+đây chỉ là address test nên hãy làm sao để receiver_address là địa chỉ ví của người tạo campain để khi donate có thể hoạt động được  
+donation platform  (blockchain cardano hackathone)
+front end thì cần có: 
+tạo dự án quyên góp, 
+quản lý dự án quyên góp,
+ quyên góp, 
+ lịch sử quyên góp,
+  lịch sử dử dụng số tiền mà người dùng đã quyên góp, 
+connect ví ( button khi bấm vào sẽ connect ví làm cái nối vs code connect ví đã được code)
+khi connected ví rồi nhưng khi chuyển qua tab home và new_campaign nó vẫn hiển thị connect chứ không phải connected
+tao them phan comunity để đăng  kêu gọi chiến dịch
+khi connect ví thành công sẽ có 1 thông báo connect succesfully nhưng nhìn khá thiếu chuyên nghiệp tôi muốn cải thiện nó 
+overall donation platform
+- Tạo dự án quyên góp
+- Cho phép người dùng donate qua blockchain (Cardano)
+- Hiển thị minh bạch dòng tiền mỗi dự án
+- ở web này thì mỗi ví connect sẽ là 1 tài khoản
+fix lại trang new campaign ko tạo đc campain 
+
+- them thong tin khi connect vi 
+test address 
+
+- Làm rõ yêu cầu hệ thống:
+  - Người tạo dự án có thể tạo chiến dịch quyên góp
+  - Người donate chuyển ADA qua blockchain
+  - Hệ thống ghi lại transaction và hiển thị công khai
+
+
+- Thiết kế sơ đồ database (SQLite hoặc PostgreSQL) (databasse lưu của cái campain ấy và các gdich etc...)
+  - Bảng Campaigns, Donations, Users
+- Thiết kế API:
+  - POST /campaigns – Tạo chiến dịch
+  - GET /campaigns – Danh sách chiến dịch
+  - POST /donate – Gửi donate
+  - GET /campaign/:id – Chi tiết + lịch sử donate
+
+- sau này có thể cập nhật thêm login các thứ
+
+---
+
+### : Tích hợp Blockchain bằng PyCardano*
+*Backend*
+- Dùng PyCardano để:
+  - Tạo địa chỉ ví cho mỗi chiến dịch
+  - Nhận giao dịch từ người donate
+  - Ghi nhận transaction vào cơ sở dữ liệu
+- Kiểm tra tương tác với Cardano testnet
+
+---
+
+### : Xây dựng giao diện và kết nối API*
+*Frontend*
+- Dựng giao diện bằng HTML + CSS:
+  - Trang chủ: danh sách chiến dịch
+  - Trang tạo chiến dịch
+  - Trang donate
+
+*Fullstack*
+- Dùng JavaScript (fetch API) để gọi backend
+- Hiển thị dữ liệu từ API lên trang
+
+---
+
+
+*Backend*
+- Ghi nhận ID giao dịch blockchain vào DB
+- Tính tổng số tiền đã donate cho mỗi chiến dịch
+
+*Frontend*
+- Hiển thị bảng thống kê donate
+- Thêm biểu đồ (nếu có thời gian)
+
+
+
+
+
+## ✅ Kết quả mong muốn cuối cung
+
+- [x] Tạo chiến dịch quyên góp
+- [x] Người dùng donate thông qua blockchain
+- [x] Hệ thống ghi nhận và hiển thị công khai
+
+
+---
+

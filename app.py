@@ -1,11 +1,69 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, redirect, url_for, send_from_directory
 from pycardano import *
+import os
+from models import db, User, Campaign, Donation
+import requests
+import json
+from datetime import datetime
+import base64
+from werkzeug.utils import secure_filename
+import time
+import shutil
+import hashlib
+from pycardano import Address, Network
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///blockchain_donation.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+db.init_app(app)
+
+# Ensure upload directory exists
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Global storage (in a real app, this would be a database)
+campaigns = {}
+donations = {}
+uploaded_images = {}
+# Add storage for community posts
+community_posts = [
+    {
+        "id": 1,
+        "title": "Help build a school in rural areas",
+        "description": "We're looking to raise funds for building schools in underprivileged areas. Anyone interested in creating a campaign?",
+        "author": "addr_test1...9a43d1",
+        "created_at": "2023-05-15T10:30:00Z",
+        "type": "campaign_idea"
+    },
+    {
+        "id": 2,
+        "title": "Clean water initiative",
+        "description": "I have an idea for a campaign to fund clean water projects in developing countries. Looking for partners!",
+        "author": "addr_test1...8b52e3",
+        "created_at": "2023-05-10T08:15:00Z",
+        "type": "campaign_idea"
+    },
+    {
+        "id": 3,
+        "title": "Animal shelter fundraising",
+        "description": "Our local animal shelter needs funds for renovation and supplies. Anyone interested in helping create a campaign?",
+        "author": "addr_test1...7c21f9",
+        "created_at": "2023-05-05T14:45:00Z",
+        "type": "campaign_idea"
+    }
+]
+# Keep track of the next post ID
+next_post_id = 4
 
 # Global variable to store the CBOR hex address and sender address
 cbor_hex_address = None
 sender_address = None
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 def get_utxo(amount_to_spend, fee_lovelace, sender_address, context):
     utxo_s = []
@@ -59,19 +117,35 @@ def decode_address(cbor_hex_address):
         for line in tx_body:
             if "address" in line:
                 sender_address = line.split(': ')[1].replace(',', '')
-                print(f"Sender Address: {sender_address}")
+                print(f"Decoded Address: {sender_address}")
                 return sender_address
     except Exception as e:
         print(f"Error decoding CBOR hex address: {e}")
         return None
 
+def validate_address(address):
+    """
+    Validate a Cardano address format.
+    Returns the address if valid, None otherwise.
+    """
+    try:
+        # Attempt to create a pycardano Address object to validate the format
+        Address.from_primitive(address)
+        return address
+    except Exception as e:
+        print(f"Invalid address format: {e}")
+        return None
+
 # Configuration
 BLOCKFROST_PROJECT_ID = "previewJhNPT5QxoI6h2TujleChtJ7qTxNZqSAZ"
 NETWORK = "https://cardano-preview.blockfrost.io/api/"
-# Receiver address
-receiver_address = "addr_test1qrufwlthgmawesrtj7ykvfh30kl6kjn3cz8sla769tjyngsxu7u7lu4xqq2jzkkc9ge0s7wra3yn2lztzfeh7xnu4ujs8l2avj"
 # Transaction fee
 fee_lovelace = 170000
+
+# Create database tables
+def create_tables():
+    with app.app_context():
+        db.create_all()
 
 @app.route("/")
 def index():
@@ -92,6 +166,121 @@ def my_campaigns():
 @app.route('/transaction')
 def transaction():
     return render_template('transaction.html')
+
+@app.route('/campaign/<int:id>')
+def view_campaign(id):
+    return render_template('campaign_details.html', campaign_id=id)
+
+# API Endpoints for Campaigns
+@app.route('/api/campaigns', methods=['GET'])
+def get_campaigns():
+    campaigns = Campaign.query.all()
+    return jsonify([campaign.to_dict() for campaign in campaigns])
+
+@app.route('/api/campaigns/<int:id>', methods=['GET'])
+def get_campaign(id):
+    campaign = Campaign.query.get_or_404(id)
+    return jsonify(campaign.to_dict())
+
+@app.route('/api/campaigns', methods=['POST'])
+def create_campaign():
+    data = request.get_json()
+    
+    # Check if the user exists, otherwise create a new user
+    creator_address = data.get('creator_address')
+    # Validate creator address
+    if not validate_address(creator_address):
+        return jsonify({"error": "Invalid creator wallet address format"}), 400
+        
+    user = User.query.filter_by(wallet_address=creator_address).first()
+    if not user:
+        user = User(wallet_address=creator_address)
+        db.session.add(user)
+        db.session.commit()
+    
+    # Handle image upload if provided
+    image_url = None
+    if data.get('image_data'):
+        try:
+            # Get base64 image data and file extension
+            image_parts = data.get('image_data').split(';base64,')
+            image_type_aux = image_parts[0].split('image/')
+            image_type = image_type_aux[1]
+            image_base64 = image_parts[1]
+            
+            # Generate unique filename
+            filename = f"campaign_{datetime.now().strftime('%Y%m%d%H%M%S')}_{user.id}.{image_type}"
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            # Save the file
+            with open(filepath, "wb") as f:
+                f.write(base64.b64decode(image_base64))
+                
+            # Set the image URL relative to static folder
+            image_url = f"/static/uploads/{filename}"
+        except Exception as e:
+            print(f"Error saving image: {e}")
+    
+    # Validate wallet address (which will be used as receiver for donations)
+    wallet_address = data.get('wallet_address')
+    if not validate_address(wallet_address):
+        return jsonify({"error": "Invalid wallet address format"}), 400
+    
+    # Create a new campaign
+    campaign = Campaign(
+        title=data.get('title'),
+        description=data.get('description'),
+        goal_amount=data.get('goal_amount'),
+        wallet_address=wallet_address,
+        image_url=image_url or data.get('image_url', ''),
+        end_date=datetime.fromisoformat(data.get('end_date')) if data.get('end_date') else None,
+        creator_id=user.id
+    )
+    
+    db.session.add(campaign)
+    db.session.commit()
+    
+    return jsonify(campaign.to_dict()), 201
+
+# API Endpoints for Donations
+@app.route('/api/donations', methods=['POST'])
+def add_donation():
+    data = request.get_json()
+    
+    # Check if transaction already recorded
+    existing_donation = Donation.query.filter_by(transaction_id=data.get('transaction_id')).first()
+    if existing_donation:
+        return jsonify({'error': 'Transaction already recorded'}), 400
+    
+    # Create a new donation
+    donation = Donation(
+        amount=data.get('amount'),
+        donor_address=data.get('donor_address'),
+        transaction_id=data.get('transaction_id'),
+        campaign_id=data.get('campaign_id')
+    )
+    
+    # Update campaign's current amount
+    campaign = Campaign.query.get(data.get('campaign_id'))
+    if not campaign:
+        return jsonify({'error': 'Campaign not found'}), 404
+    
+    campaign.current_amount += data.get('amount')
+    
+    db.session.add(donation)
+    db.session.commit()
+    
+    return jsonify(donation.to_dict()), 201
+
+@app.route('/api/donations/campaign/<int:campaign_id>', methods=['GET'])
+def get_campaign_donations(campaign_id):
+    donations = Donation.query.filter_by(campaign_id=campaign_id).all()
+    return jsonify([donation.to_dict() for donation in donations])
+
+@app.route('/api/donations/user/<string:wallet_address>', methods=['GET'])
+def get_user_donations(wallet_address):
+    donations = Donation.query.filter_by(donor_address=wallet_address).all()
+    return jsonify([donation.to_dict() for donation in donations])
 
 @app.route("/set_unused_address", methods=["POST"])
 def set_unused_address():
@@ -120,21 +309,47 @@ def build_transaction():
         # Get the amount to send from the request
         data = request.get_json()
         send_amount_lovelace = int(data.get("amount", 0))
+        campaign_id = data.get("campaign_id")
+        
         if send_amount_lovelace <= 0:
             return jsonify({"error": "Invalid amount"}), 400
 
         if not sender_address:
             return jsonify({"error": "Sender address is not set. Please connect the wallet and fetch the unused address first."}), 400
+            
+        # Validate sender address
+        validated_sender_address = validate_address(sender_address)
+        if not validated_sender_address:
+            return jsonify({"error": "Invalid sender address format. Please reconnect your wallet."}), 400
 
+        # Get the campaign's wallet address
+        campaign = Campaign.query.get(campaign_id)
+        if not campaign:
+            return jsonify({"error": "Campaign not found"}), 404
+        
+        # Always use the campaign wallet address as the receiver and validate it
+        campaign_wallet_address = campaign.wallet_address
+        if not campaign_wallet_address:
+            return jsonify({"error": "Campaign wallet address is not set"}), 400
+            
+        # Validate receiver address
+        validated_receiver_address = validate_address(campaign_wallet_address)
+        if not validated_receiver_address:
+            return jsonify({"error": "Invalid campaign wallet address format"}), 400
+        
+        print(f"Donation of {send_amount_lovelace} lovelace")
+        print(f"From: {validated_sender_address}")
+        print(f"To: {validated_receiver_address}")
+        
         context = BlockFrostChainContext(BLOCKFROST_PROJECT_ID, base_url=NETWORK)
-        input_tx_id_hex, input_tx_index, input_amount_lovelace = get_utxo(send_amount_lovelace, fee_lovelace, sender_address, context)
+        input_tx_id_hex, input_tx_index, input_amount_lovelace = get_utxo(send_amount_lovelace, fee_lovelace, validated_sender_address, context)
 
         print(f"Transaction hash: {input_tx_id_hex}")
         print(f"tx_id: {input_tx_index}")
         print(f"Input amount: {input_amount_lovelace} lovelace")
 
-        my_address = Address.from_primitive(sender_address)
-        recipient_address = Address.from_primitive(receiver_address)
+        my_address = Address.from_primitive(validated_sender_address)
+        recipient_address = Address.from_primitive(validated_receiver_address)
 
         # Create transaction input
         tx_id = TransactionId(bytes.fromhex(input_tx_id_hex))
@@ -197,10 +412,268 @@ def build_transaction():
 
         print("\n--- Raw Transaction CBOR (Hex - Unsigned) ---")
         print(cbor_hex)
-        return jsonify({"cbor_hex": cbor_hex})
+        return jsonify({"cbor_hex": cbor_hex, "campaign_id": campaign_id})
     except Exception as e:
         print(f"Error building transaction: {e}")
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/verify_transaction", methods=["POST"])
+def verify_transaction():
+    try:
+        data = request.get_json()
+        tx_hash = data.get("tx_hash")
+        amount = int(data.get("amount", 0))
+        campaign_id = data.get("campaign_id")
+        donor_address = data.get("donor_address")
+        
+        if not tx_hash:
+            return jsonify({"error": "Missing transaction hash"}), 400
+            
+        # Validate donor address
+        if not validate_address(donor_address):
+            return jsonify({"error": "Invalid donor address format"}), 400
+        
+        # Check if the transaction is already recorded in the database
+        existing_donation = Donation.query.filter_by(transaction_id=tx_hash).first()
+        if existing_donation:
+            return jsonify({"success": False, "message": "Transaction already recorded"}), 400
+        
+        # Verify the transaction on the blockchain
+        api_url = f"{NETWORK}v0/txs/{tx_hash}"
+        headers = {"project_id": BLOCKFROST_PROJECT_ID}
+        
+        try:
+            response = requests.get(api_url, headers=headers)
+            response.raise_for_status()  # Raise an exception for non-200 status codes
+            
+            # Get transaction details to verify donation
+            tx_details = response.json()
+            print(f"Transaction verified on blockchain: {tx_hash}")
+            
+            # Record the donation
+            donation = Donation(
+                amount=amount,
+                donor_address=donor_address,
+                transaction_id=tx_hash,
+                campaign_id=campaign_id
+            )
+            
+            # Update campaign's current amount
+            campaign = Campaign.query.get(campaign_id)
+            if not campaign:
+                return jsonify({"success": False, "message": "Campaign not found"}), 404
+            
+            campaign.current_amount += amount
+            
+            db.session.add(donation)
+            db.session.commit()
+            
+            return jsonify({
+                "success": True,
+                "message": "Donation recorded successfully",
+                "donation": donation.to_dict()
+            }), 201
+        except requests.exceptions.RequestException as e:
+            return jsonify({
+                "success": False,
+                "message": f"Error verifying transaction: {str(e)}"
+            }), 500
+    
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": f"Error processing donation: {str(e)}"
+        }), 500
+
+@app.route('/community')
+def community():
+    return render_template('community.html')
+
+@app.route('/api/community_posts', methods=['GET'])
+def get_community_posts():
+    # Return the community posts sorted by most recent first
+    sorted_posts = sorted(community_posts, key=lambda x: x['created_at'], reverse=True)
+    return jsonify(sorted_posts)
+
+@app.route('/api/community_posts', methods=['POST'])
+def create_community_post():
+    global community_posts, next_post_id
+    
+    # Check if request has form data (for multipart/form-data with image) or JSON
+    if request.content_type and 'multipart/form-data' in request.content_type:
+        # Handle form data with potential image
+        title = request.form.get('title')
+        description = request.form.get('description')
+        author = request.form.get('author')
+        post_type = request.form.get('type')
+        
+        # Validate required fields
+        if not title or not description or not author or not post_type:
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # Handle image upload if present
+        image_url = None
+        if 'image' in request.files and request.files['image'].filename:
+            image_file = request.files['image']
+            
+            # Validate file type
+            if not allowed_file(image_file.filename):
+                return jsonify({'error': 'Invalid file type. Only images are allowed.'}), 400
+            
+            # Create unique filename
+            filename = secure_filename(image_file.filename)
+            timestamp = int(time.time())
+            unique_filename = f"{timestamp}_{filename}"
+            
+            # Save the file
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+            image_file.save(file_path)
+            
+            # Create URL for the image
+            image_url = f"/static/uploads/{unique_filename}"
+    else:
+        # Handle JSON data
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+            
+        # Validate required fields
+        required_fields = ['title', 'description', 'author', 'type']
+        for field in required_fields:
+            if field not in data:
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+                
+        title = data['title']
+        description = data['description']
+        author = data['author']
+        post_type = data['type']
+        image_url = None
+    
+    # Create the new post
+    new_post = {
+        'id': next_post_id,
+        'title': title,
+        'description': description,
+        'author': author,
+        'created_at': datetime.now().isoformat(),
+        'type': post_type,
+        'image_url': image_url
+    }
+    
+    # Add to posts and increment ID counter
+    community_posts.append(new_post)
+    next_post_id += 1
+    
+    return jsonify(new_post), 201
+
+@app.route('/api/user/<string:wallet_address>', methods=["GET"])
+def get_user_by_wallet(wallet_address):
+    user = User.query.filter_by(wallet_address=wallet_address).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    return jsonify(user.to_dict())
+
+@app.route("/api/user_campaigns/<string:wallet_address>", methods=["GET"])
+def get_user_campaigns(wallet_address):
+    user = User.query.filter_by(wallet_address=wallet_address).first()
+    if not user:
+        return jsonify([])
+    campaigns = Campaign.query.filter_by(creator_id=user.id).all()
+    return jsonify([campaign.to_dict() for campaign in campaigns])
+
+@app.route('/api/campaigns/<int:id>', methods=['DELETE'])
+def delete_campaign(id):
+    # Get the campaign
+    campaign = Campaign.query.get_or_404(id)
+    
+    # Get the requester's wallet address
+    wallet_address = request.json.get('wallet_address')
+    if not wallet_address:
+        return jsonify({'error': 'Wallet address is required'}), 400
+    
+    # Find the user by wallet address
+    user = User.query.filter_by(wallet_address=wallet_address).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+    
+    # Check if this user is the campaign creator
+    if campaign.creator_id != user.id:
+        return jsonify({'error': 'Unauthorized. Only the campaign creator can delete this campaign'}), 403
+    
+    # Delete the campaign's image if it exists
+    if campaign.image_url and campaign.image_url.startswith('/static/uploads/'):
+        try:
+            image_path = os.path.join('static', campaign.image_url.split('/static/')[1])
+            if os.path.exists(image_path):
+                os.remove(image_path)
+        except Exception as e:
+            print(f"Error removing campaign image: {e}")
+    
+    # Delete related donations
+    Donation.query.filter_by(campaign_id=id).delete()
+    
+    # Delete the campaign
+    db.session.delete(campaign)
+    db.session.commit()
+    
+    return jsonify({'message': 'Campaign deleted successfully'}), 200
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/api/wallet_info', methods=['POST'])
+def get_wallet_info():
+    try:
+        data = request.get_json()
+        wallet_address = data.get('wallet_address')
+        
+        if not wallet_address:
+            return jsonify({"error": "Missing wallet address"}), 400
+            
+        # Validate wallet address
+        if not validate_address(wallet_address):
+            return jsonify({"error": "Invalid wallet address format"}), 400
+            
+        # For demonstration, we'll determine network from address format
+        network = "Testnet" if "addr_test" in wallet_address else "Mainnet"
+        
+        # Get balance from Blockfrost API
+        try:
+            api_url = f"{NETWORK}v0/addresses/{wallet_address}"
+            headers = {"project_id": BLOCKFROST_PROJECT_ID}
+            response = requests.get(api_url, headers=headers)
+            response.raise_for_status()
+            
+            address_data = response.json()
+            balance_lovelace = int(address_data.get('amount', [{'quantity': '0'}])[0].get('quantity', '0'))
+            balance_ada = balance_lovelace / 1000000
+            
+            # Get stake information if available
+            stake_address = address_data.get('stake_address', 'Not staked')
+            
+            return jsonify({
+                "address": wallet_address,
+                "network": network,
+                "balance_ada": balance_ada,
+                "balance_lovelace": balance_lovelace,
+                "stake_address": stake_address
+            })
+            
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching wallet info from Blockfrost: {e}")
+            # Provide fallback response with network info but no balance
+            return jsonify({
+                "address": wallet_address,
+                "network": network,
+                "balance_ada": "Unknown",
+                "balance_lovelace": 0,
+                "error": "Could not fetch wallet balance"
+            })
+            
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
+    create_tables()
     app.run(debug=True)

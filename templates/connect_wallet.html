@@ -20,6 +20,7 @@
         <link rel="stylesheet" href="../static/css/base.css">
         <link rel="stylesheet" href="../static/css/layout.css">
         <link rel="stylesheet" href="../static/css/style.css">
+        <link rel="stylesheet" href="../static/css/custom.css">
     </head>
     <body>
         <header>
@@ -70,7 +71,7 @@
                         </div>
                     </div>
                     <div class="wallet-options">
-                        <div class="eternl-wallet">
+                        <div class="eternl-wallet" id="eternl-connect-btn">
                             <img src="../static/assets/images/eternl.png" alt="">
                             <p>Eternl</p>
                         </div>
@@ -140,6 +141,534 @@
                 </div>
             </div>
         </footer>
+        
+        <!-- Disconnect Wallet Confirmation Modal -->
+        <div class="modal fade" id="disconnectWalletModal" tabindex="-1" aria-labelledby="disconnectWalletModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning">
+                        <h5 class="modal-title" id="disconnectWalletModalLabel">Disconnect Wallet</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to disconnect your wallet?</p>
+                        <p class="mb-0 text-muted small">You will need to reconnect your wallet to create campaigns or make donations.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-warning" id="confirm-disconnect-btn">Disconnect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                checkWalletConnection();
+                
+                // Add click events for wallet connections
+                document.getElementById('eternl-connect-btn').addEventListener('click', connectEternlWallet);
+                document.querySelector('.nami-wallet').addEventListener('click', connectNamiWallet);
+                document.querySelector('.flint-wallet').addEventListener('click', connectFlintWallet);
+            });
+            
+            function checkWalletConnection() {
+                const storedAddress = localStorage.getItem('sender_address');
+                if (storedAddress) {
+                    // Display connected state
+                    document.querySelector('.header-connect-wallet a').innerHTML = `
+                        <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i>
+                        Connected: ${storedAddress.substring(0, 10)}...
+                    `;
+                    
+                    // Show disconnect button
+                    const walletInfoAlert = document.getElementById('walletInfoAlert');
+                    walletInfoAlert.innerHTML = `
+                        <div class="alert alert-success">
+                            <h5>Wallet Connected</h5>
+                            <p>Your wallet address: ${storedAddress.substring(0, 12)}...${storedAddress.substring(storedAddress.length - 8)}</p>
+                            <div id="wallet-details" class="mt-2">
+                                <div class="d-flex justify-content-center">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading wallet information...</span>
+                                    </div>
+                                    <span class="ms-2">Loading wallet information...</span>
+                                </div>
+                            </div>
+                            <button class="btn btn-danger mt-3" onclick="disconnectWallet()">Disconnect Wallet</button>
+                        </div>
+                    `;
+                    
+                    // Fetch wallet information
+                    fetchWalletInfo(storedAddress);
+                }
+            }
+            
+            function fetchWalletInfo(walletAddress) {
+                fetch('/api/wallet_info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ wallet_address: walletAddress })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const walletDetails = document.getElementById('wallet-details');
+                    if (data.error) {
+                        walletDetails.innerHTML = `
+                            <div class="wallet-info-card mt-2">
+                                <div class="info-item">
+                                    <span class="info-label">Network:</span>
+                                    <span class="info-value">${data.network || 'Unknown'}</span>
+                                </div>
+                                <div class="info-item text-danger">
+                                    <span class="info-label">Balance:</span>
+                                    <span class="info-value">Could not fetch balance</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        walletDetails.innerHTML = `
+                            <div class="wallet-info-card mt-2">
+                                <div class="info-item">
+                                    <span class="info-label">Network:</span>
+                                    <span class="info-value ${data.network === 'Testnet' ? 'text-warning' : 'text-success'}">${data.network}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Balance:</span>
+                                    <span class="info-value">${typeof data.balance_ada === 'number' ? data.balance_ada.toFixed(2) : data.balance_ada} ADA</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Stake Address:</span>
+                                    <span class="info-value small text-muted">${data.stake_address ? (data.stake_address.substring(0, 10) + '...') : 'Not staked'}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching wallet info:', error);
+                    document.getElementById('wallet-details').innerHTML = `
+                        <div class="text-danger">Error fetching wallet information</div>
+                    `;
+                });
+            }
+            
+            async function connectEternlWallet() {
+                try {
+                    // Check if Eternl is available
+                    if (!window.cardano || !window.cardano.eternl) {
+                        showNotification('error', 'Wallet Not Found', 'Eternl wallet not found. Please install the Eternl wallet extension.');
+                        return;
+                    }
+                    
+                    // Request connection to the wallet
+                    const api = await window.cardano.eternl.enable();
+                    
+                    try {
+                        // Get unused addresses (receiving addresses)
+                        const unusedAddresses = await api.getUnusedAddresses();
+                        const cbor_hex_address = await api.getChangeAddress();
+                        
+                        if (unusedAddresses && unusedAddresses.length > 0) {
+                            const address = unusedAddresses[0];
+                            
+                            // Store address in localStorage temporarily
+                            localStorage.setItem('sender_address', address);
+                            
+                            // Update UI to show connected state
+                            checkWalletConnection();
+                            
+                            // Send CBOR address to backend for proper decoding
+                            fetch('/set_unused_address', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ cbor_hex_address })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.error) {
+                                    console.error("Error setting address:", data.error);
+                                    showNotification('warning', 'Address Verification Issue', 'There was an issue verifying your wallet address format.');
+                                } else {
+                                    console.log("Address set successfully:", data);
+                                    
+                                    // Check if the decoded address matches what we have
+                                    if (data.sender_address) {
+                                        // Update localStorage with the properly decoded address
+                                        localStorage.setItem('sender_address', data.sender_address);
+                                        
+                                        // Update UI
+                                        checkWalletConnection();
+                                        
+                                        // Fetch wallet balance and network info
+                                        fetchWalletInfo(data.sender_address);
+                                        
+                                        // Show success notification with the decoded address
+                                        const decodedAddress = data.sender_address;
+                                        const shortAddress = decodedAddress.substring(0, 8) + '...' + decodedAddress.substring(decodedAddress.length - 6);
+                                        showNotification('success', 'Wallet Connected', `Your wallet has been successfully connected. Address: ${shortAddress}`);
+                                    } else {
+                                        // If no decoded address returned, use the original one
+                                        showSuccessNotification();
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error in address decoding:", error);
+                                // Show success with original address if there's an error in decoding
+                                showSuccessNotification();
+                            });
+                        } else {
+                            showNotification('error', 'No Address Found', 'No unused addresses found in your wallet.');
+                        }
+                    } catch (addrError) {
+                        console.error('Error getting wallet address:', addrError);
+                        showNotification('error', 'Address Error', 'Error retrieving wallet address. Please check your wallet settings.');
+                    }
+                } catch (error) {
+                    console.error('Error connecting to Eternl wallet:', error);
+                    showNotification('error', 'Connection Failed', 'Error connecting to Eternl wallet. Please make sure it is properly set up.');
+                }
+            }
+            
+            async function connectNamiWallet() {
+                try {
+                    // Check if Nami is available
+                    if (!window.cardano || !window.cardano.nami) {
+                        showNotification('error', 'Wallet Not Found', 'Nami wallet not found. Please install the Nami wallet extension.');
+                        return;
+                    }
+                    
+                    // Request connection to the wallet
+                    const api = await window.cardano.nami.enable();
+                    
+                    try {
+                        // Get both unused addresses and CBOR address for validation
+                        const unusedAddresses = await api.getUnusedAddresses();
+                        const cbor_hex_address = await api.getChangeAddress();
+                        
+                        if (unusedAddresses && unusedAddresses.length > 0) {
+                            const address = unusedAddresses[0];
+                            
+                            // Store address in localStorage temporarily
+                            localStorage.setItem('sender_address', address);
+                            
+                            // Update UI to show connected state
+                            checkWalletConnection();
+                            
+                            // Send CBOR address to backend for proper decoding
+                            fetch('/set_unused_address', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ cbor_hex_address })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.error) {
+                                    console.error("Error setting address:", data.error);
+                                    showNotification('warning', 'Address Verification Issue', 'There was an issue verifying your wallet address format.');
+                                } else {
+                                    console.log("Address set successfully:", data);
+                                    
+                                    // Check if the decoded address is available
+                                    if (data.sender_address) {
+                                        // Update localStorage with the properly decoded address
+                                        localStorage.setItem('sender_address', data.sender_address);
+                                        
+                                        // Update UI
+                                        checkWalletConnection();
+                                        
+                                        // Fetch wallet balance and network info
+                                        fetchWalletInfo(data.sender_address);
+                                        
+                                        // Show success notification with the decoded address
+                                        const decodedAddress = data.sender_address;
+                                        const shortAddress = decodedAddress.substring(0, 8) + '...' + decodedAddress.substring(decodedAddress.length - 6);
+                                        showNotification('success', 'Wallet Connected', `Your wallet has been successfully connected. Address: ${shortAddress}`);
+                                    } else {
+                                        // If no decoded address returned, use the original one
+                                        showSuccessNotification();
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error in address decoding:", error);
+                                // Show success with original address if there's an error in decoding
+                                showSuccessNotification();
+                            });
+                        } else {
+                            showNotification('error', 'No Address Found', 'No unused addresses found in your wallet.');
+                        }
+                    } catch (addrError) {
+                        console.error('Error getting wallet address:', addrError);
+                        showNotification('error', 'Address Error', 'Error retrieving wallet address. Please check your wallet settings.');
+                    }
+                } catch (error) {
+                    console.error('Error connecting to Nami wallet:', error);
+                    showNotification('error', 'Connection Failed', 'Error connecting to Nami wallet. Please make sure it is properly set up.');
+                }
+            }
+            
+            async function connectFlintWallet() {
+                try {
+                    // Check if Flint is available
+                    if (!window.cardano || !window.cardano.flint) {
+                        showNotification('error', 'Wallet Not Found', 'Flint wallet not found. Please install the Flint wallet extension.');
+                        return;
+                    }
+                    
+                    // Request connection to the wallet
+                    const api = await window.cardano.flint.enable();
+                    
+                    try {
+                        // Get both unused addresses and CBOR address for validation
+                        const unusedAddresses = await api.getUnusedAddresses();
+                        const cbor_hex_address = await api.getChangeAddress();
+                        
+                        if (unusedAddresses && unusedAddresses.length > 0) {
+                            const address = unusedAddresses[0];
+                            
+                            // Store address in localStorage temporarily
+                            localStorage.setItem('sender_address', address);
+                            
+                            // Update UI to show connected state
+                            checkWalletConnection();
+                            
+                            // Send CBOR address to backend for proper decoding
+                            fetch('/set_unused_address', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ cbor_hex_address })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.error) {
+                                    console.error("Error setting address:", data.error);
+                                    showNotification('warning', 'Address Verification Issue', 'There was an issue verifying your wallet address format.');
+                                } else {
+                                    console.log("Address set successfully:", data);
+                                    
+                                    // Check if the decoded address is available
+                                    if (data.sender_address) {
+                                        // Update localStorage with the properly decoded address
+                                        localStorage.setItem('sender_address', data.sender_address);
+                                        
+                                        // Update UI
+                                        checkWalletConnection();
+                                        
+                                        // Fetch wallet balance and network info
+                                        fetchWalletInfo(data.sender_address);
+                                        
+                                        // Show success notification with the decoded address
+                                        const decodedAddress = data.sender_address;
+                                        const shortAddress = decodedAddress.substring(0, 8) + '...' + decodedAddress.substring(decodedAddress.length - 6);
+                                        showNotification('success', 'Wallet Connected', `Your wallet has been successfully connected. Address: ${shortAddress}`);
+                                    } else {
+                                        // If no decoded address returned, use the original one
+                                        showSuccessNotification();
+                                    }
+                                }
+                            })
+                            .catch(error => {
+                                console.error("Error in address decoding:", error);
+                                // Show success with original address if there's an error in decoding
+                                showSuccessNotification();
+                            });
+                        } else {
+                            showNotification('error', 'No Address Found', 'No unused addresses found in your wallet.');
+                        }
+                    } catch (addrError) {
+                        console.error('Error getting wallet address:', addrError);
+                        showNotification('error', 'Address Error', 'Error retrieving wallet address. Please check your wallet settings.');
+                    }
+                } catch (error) {
+                    console.error('Error connecting to Flint wallet:', error);
+                    showNotification('error', 'Connection Failed', 'Error connecting to Flint wallet. Please make sure it is properly set up.');
+                }
+            }
+            
+            function validateAddress(address) {
+                // Basic validation for Cardano addresses
+                return address && 
+                       (address.startsWith('addr') || address.startsWith('addr_test')) && 
+                       address.length >= 58;
+            }
+            
+            function saveManualAddress() {
+                const manualAddress = document.getElementById('manualAddress').value.trim();
+                
+                if (!validateAddress(manualAddress)) {
+                    showNotification('error', 'Invalid Address', 'Please enter a valid Cardano address starting with "addr" or "addr_test".');
+                    return;
+                }
+                
+                // Send address to backend for validation and decoding
+                fetch('/set_unused_address', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ manual_address: manualAddress })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error("Error setting address:", data.error);
+                        showNotification('warning', 'Address Verification Issue', 'There was an issue verifying your wallet address format.');
+                    } else {
+                        console.log("Manual address set successfully:", data);
+                        
+                        // Use the decoded address if available, otherwise use the manual address
+                        const addressToUse = data.sender_address || manualAddress;
+                        
+                        // Store address in localStorage
+                        localStorage.setItem('sender_address', addressToUse);
+                        
+                        // Update UI
+                        checkWalletConnection();
+                        
+                        // Fetch wallet balance and network info
+                        fetchWalletInfo(addressToUse);
+                        
+                        // Show success notification with the decoded/validated address
+                        const shortAddress = addressToUse.substring(0, 8) + '...' + addressToUse.substring(addressToUse.length - 6);
+                        showNotification('success', 'Wallet Connected', `Your wallet has been successfully connected. Address: ${shortAddress}`);
+                    }
+                })
+                .catch(error => {
+                    console.error("Error in address validation:", error);
+                    
+                    // Store address in localStorage even if validation fails
+                    localStorage.setItem('sender_address', manualAddress);
+                    
+                    // Update UI
+                    checkWalletConnection();
+                    
+                    // Show success notification with the manual address
+                    showSuccessNotification();
+                });
+            }
+            
+            function showSuccessNotification() {
+                const address = localStorage.getItem('sender_address');
+                const shortAddress = address.substring(0, 8) + '...' + address.substring(address.length - 6);
+                
+                showNotification('success', 'Wallet Connected', `Your wallet has been successfully connected. Address: ${shortAddress}`);
+            }
+            
+            function disconnectWallet() {
+                // Show disconnect confirmation modal
+                new bootstrap.Modal(document.getElementById('disconnectWalletModal')).show();
+            }
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                // Add event listener for confirmation button
+                document.getElementById('confirm-disconnect-btn').addEventListener('click', function() {
+                    // Hide the modal
+                    bootstrap.Modal.getInstance(document.getElementById('disconnectWalletModal')).hide();
+                    
+                    localStorage.removeItem('sender_address');
+                    showNotification('info', 'Wallet Disconnected', 'Your wallet has been disconnected successfully.');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                });
+            });
+            
+            function showNotification(type, title, message) {
+                // Create notification container if it doesn't exist
+                let notificationContainer = document.getElementById('notification-container');
+                if (!notificationContainer) {
+                    notificationContainer = document.createElement('div');
+                    notificationContainer.id = 'notification-container';
+                    notificationContainer.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        z-index: 1050;
+                        max-width: 350px;
+                    `;
+                    document.body.appendChild(notificationContainer);
+                }
+                
+                // Map type to colors and icons
+                const typeMap = {
+                    'success': { color: '#28a745', icon: 'fa-circle-check' },
+                    'error': { color: '#dc3545', icon: 'fa-circle-exclamation' },
+                    'warning': { color: '#ffc107', icon: 'fa-triangle-exclamation' },
+                    'info': { color: '#17a2b8', icon: 'fa-circle-info' }
+                };
+                
+                const typeInfo = typeMap[type] || typeMap.info;
+                
+                // Create the notification
+                const notification = document.createElement('div');
+                notification.className = 'toast show';
+                notification.style.cssText = `
+                    background-color: #ffffff;
+                    border-left: 4px solid ${typeInfo.color};
+                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                    margin-bottom: 10px;
+                `;
+                
+                notification.innerHTML = `
+                    <div class="toast-header">
+                        <i class="fa-solid ${typeInfo.icon} me-2" style="color: ${typeInfo.color};"></i>
+                        <strong class="me-auto">${title}</strong>
+                        <small>just now</small>
+                        <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+                    </div>
+                    <div class="toast-body">
+                        <p class="mb-0">${message}</p>
+                    </div>
+                `;
+                
+                // Add to container
+                notificationContainer.appendChild(notification);
+                
+                // Remove after 5 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 5000);
+            }
+            
+            // Add CSS styles for wallet info display
+            document.head.insertAdjacentHTML('beforeend', `
+                <style>
+                    .wallet-info-card {
+                        background-color: #f8f9fa;
+                        border-radius: 8px;
+                        padding: 12px;
+                        margin-top: 10px;
+                        border: 1px solid #e9ecef;
+                    }
+                    .info-item {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 8px;
+                        font-size: 0.9rem;
+                    }
+                    .info-label {
+                        font-weight: bold;
+                        color: #6c757d;
+                    }
+                    .info-value {
+                        font-family: monospace;
+                    }
+                </style>
+            `);
+        </script>
     </body>
 </html>

@@ -20,6 +20,7 @@
         <link rel="stylesheet" href="../static/css/base.css">
         <link rel="stylesheet" href="../static/css/layout.css">
         <link rel="stylesheet" href="../static/css/style.css">
+        <link rel="stylesheet" href="../static/css/custom.css">
     </head>
     <body>
         <header>
@@ -43,9 +44,12 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ url_for('transaction') }}">Transactions</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('community') }}">Community</a>
+                        </li>
                     </ul>
                 </div>
-                <div class="header-connect-wallet" >
+                <div class="header-connect-wallet" id="wallet-connect-container">
                     <a class="connect-wallet" href="{{ url_for('connect_wallet') }}">
                         <i class="fa-solid fa-wallet" style="margin-right: 0.5rem;"></i>
                         Connect Wallet
@@ -53,93 +57,14 @@
                 </div>
             </div>
         </header>
-        <section class="my_campaigns">
+        <section class="my-campaigns">
             <div class="container d-flex justify-content-center">
-                <div class="container-1 d-flex flex-column">
-                    <h1>All my campaigns</h1>
-                    <div class="total-campaigns-and-donate-and-donors">
-                        <div class="total-campaigns">
-                            <div class="total-campaigns-main">
-                                <div class="total-campaigns-main-left">
-                                    <i class="fa-solid fa-tents" style="font-size: 3.5rem; color: #fff;"></i>
-                                </div>
-                                <div class="total-campaigns-main-right">
-                                    <p class="total-campaigns-main-right-top">0</p>
-                                    <p class="total-campaigns-main-right-bottom">Campaigns</p>
-                                </div>
-                            </div>
-                            <div class="view-details">
-                                <p>View details</p>
-                                <i class="fa-regular fa-circle-right"></i>
-                            </div>
-                        </div>
-                        <div class="total-donate">
-                            <div class="total-donate-main">
-                                <div class="total-donate-main-left">
-                                    <img src="../static/assets/images/reversed_logo.png" alt="" style="width: 50%;">
-                                </div>
-                                <div class="total-donate-main-right">
-                                    <p class="total-donate-main-right-top">0</p>
-                                    <p class="total-donate-main-right-bottom">ADA</p>
-                                </div>
-                            </div>
-                            <div class="view-details">
-                                <p>View details</p>
-                                <i class="fa-regular fa-circle-right"></i>
-                            </div>
-                        </div>
-                        <div class="total-donors">
-                            <div class="total-donors-main">
-                                <div class="total-donors-main-left">
-                                    <i class="fa-solid fa-users" style="font-size: 3.5rem; color: #fff;"></i>
-                                </div>
-                                <div class="total-donors-main-right">
-                                    <p class="total-donors-main-right-top">0</p>
-                                    <p class="total-donors-main-right-bottom">Donors</p>
-                                </div>
-                            </div>
-                            <div class="view-details">
-                                <p>View details</p>
-                                <i class="fa-regular fa-circle-right"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="all-my-campaigns d-flex flex-column align-items-center">
-                        <div class="all-my-campaigns-text">
-                            <p>My campaigns</p>
-                        </div>
-                        <div class="all-my-campaigns-main">
-                            <div class="d-flex flex-column align-items-center">
-                                <p>You haven't created any campaigns yet.</p>
-                                <a class="create-new-campaign" href="new_campaign.html">Create your first campaign</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="recent-donations d-flex flex-column align-items-center">
-                        <div class="recent-donations-text">
-                            <p>Recent donations</p>
-                        </div>
-                        <div class="recent-donations-main">
-                            <div class="recent-donations-main-category d-flex">
-                                <div>
-                                    <p>Campaign</p>
-                                </div>
-                                <div>
-                                    <p>Donor</p>
-                                </div>
-                                <div>
-                                    <p>Amount</p>
-                                </div>
-                                <div>
-                                    <p>Date</p>
-                                </div>
-                                <div>
-                                    <p>Transaction</p>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-center">No donations received yet.</p>
-                            </div>
+                <div class="container-1">
+                    <p class="my-campaigns-text">Your campaigns</p>
+                    <div id="campaigns-container" class="active-campaigns-main">
+                        <div class="no-campaign d-flex flex-column align-items-center" id="no-campaigns-message">
+                            <p>You haven't created any campaigns yet</p>
+                            <a href="{{ url_for('new_campaign') }}">Create your first campaign</a>
                         </div>
                     </div>
                 </div>
@@ -163,6 +88,9 @@
                             </li>
                             <li>
                                 <a href="{{ url_for('my_campaigns') }}" class="text-decoration-none text-secondary">My campaigns</a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('community') }}" class="text-decoration-none text-secondary">Community</a>
                             </li>
                         </ul>
                     </div>
@@ -188,5 +116,123 @@
             </div>
         </footer>
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+        <script src="{{ url_for('static', filename='js/wallet-info.js') }}"></script>
+        
+        <!-- Notification container for toast messages -->
+        <div id="notification-container" style="position: fixed; top: 20px; right: 20px; z-index: 1050; max-width: 350px;"></div>
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                // Check if wallet is connected
+                const storedAddress = localStorage.getItem('sender_address');
+                if (!storedAddress) {
+                    // If wallet is not connected, show notification and redirect to connect wallet page
+                    showNotification('error', 'Wallet Required', 'Please connect your wallet first to see your campaigns');
+                    setTimeout(() => {
+                        window.location.href = "{{ url_for('connect_wallet') }}";
+                    }, 2000);
+                    return;
+                }
+                
+                // Update wallet connection button
+                updateWalletDisplay(storedAddress);
+                
+                // Load user's campaigns
+                loadUserCampaigns(storedAddress);
+            });
+            
+            function updateWalletDisplay(address) {
+                document.getElementById('wallet-connect-container').innerHTML = `
+                    <a class="connect-wallet connected-wallet" href="{{ url_for('connect_wallet') }}">
+                        <i class="fa-solid fa-wallet"></i>
+                        Connected: ${address.substring(0, 10)}...
+                    </a>
+                `;
+            }
+            
+            function showNotification(type, title, message) {
+                // Create notification container if it doesn't exist
+                let notificationContainer = document.getElementById('notification-container');
+                
+                // Create the notification
+                const notification = document.createElement('div');
+                notification.className = 'toast show';
+                notification.style.cssText = `
+                    background-color: #ffffff;
+                    border-left: 4px solid ${type === 'success' ? '#28a745' : '#dc3545'};
+                    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+                    margin-bottom: 10px;
+                `;
+                
+                notification.innerHTML = `
+                    <div class="toast-header">
+                        <i class="fa-solid ${type === 'success' ? 'fa-circle-check text-success' : 'fa-circle-exclamation text-danger'} me-2"></i>
+                        <strong class="me-auto">${title}</strong>
+                        <small>just now</small>
+                        <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+                    </div>
+                    <div class="toast-body">
+                        <p class="mb-0">${message}</p>
+                    </div>
+                `;
+                
+                // Add to container
+                notificationContainer.appendChild(notification);
+                
+                // Remove after 5 seconds
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 5000);
+            }
+            
+            function loadUserCampaigns(walletAddress) {
+                fetch(`/api/user_campaigns/${walletAddress}`)
+                    .then(response => response.json())
+                    .then(campaigns => {
+                        const campaignsContainer = document.getElementById('campaigns-container');
+                        const noCampaignsMessage = document.getElementById('no-campaigns-message');
+                        
+                        if (campaigns.length > 0) {
+                            // Hide the no campaigns message
+                            noCampaignsMessage.style.display = 'none';
+                            
+                            // Create campaign cards
+                            const campaignCardsHtml = campaigns.map(campaign => {
+                                const progress = (campaign.current_amount / campaign.goal_amount) * 100;
+                                const formattedCurrentAmount = (campaign.current_amount / 1000000).toFixed(2);
+                                const formattedGoalAmount = (campaign.goal_amount / 1000000).toFixed(2);
+                                
+                                return `
+                                    <div class="campaign-card">
+                                        <div class="campaign-image">
+                                            <img src="${campaign.image_url || '../static/assets/images/default-campaign.jpg'}" alt="${campaign.title}">
+                                        </div>
+                                        <div class="campaign-details">
+                                            <h3>${campaign.title}</h3>
+                                            <p>${campaign.description.substring(0, 100)}${campaign.description.length > 100 ? '...' : ''}</p>
+                                            <div class="progress mb-3">
+                                                <div class="progress-bar" role="progressbar" style="width: ${progress}%" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>${formattedCurrentAmount} / ${formattedGoalAmount} ADA</span>
+                                                <span>${progress.toFixed(1)}%</span>
+                                            </div>
+                                            <a href="/campaign/${campaign.id}" class="btn btn-primary mt-3">View Details</a>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('');
+                            
+                            campaignsContainer.innerHTML = campaignCardsHtml;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error loading campaigns:', error);
+                    });
+            }
+        </script>
     </body>
 </html>
