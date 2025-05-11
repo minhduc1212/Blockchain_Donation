@@ -1,2 +1,0 @@
-select utxo
-get transaction with blockfrost https://docs.blockfrost.io/#tag/cardano--transactions: first -> get hash then get https://docs.blockfrost.io/#tag/cardano--transactions/GET/txs/{hash}/utxos
