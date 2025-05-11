@@ -69,8 +69,8 @@
                             <p>To complete your donation, please follow these steps:</p>
                             <ol>
                                 <li>Review your donation details below</li>
-                                <li>Copy the transaction hash after you've sent ADA to the donation address</li>
-                                <li>Submit the transaction hash to verify your donation</li>
+                                <li>Click the "Sign with Wallet" button to authorize the transaction</li>
+                                <li>Confirm the transaction in your wallet when prompted</li>
                             </ol>
                         </div>
                         
@@ -84,11 +84,26 @@
                                 </div>
                                 
                                 <div class="mt-4">
+                                    <div id="transaction-status" class="mb-3"></div>
+                                    <div id="manual-verification" style="display:none;">
+                                        <div class="alert alert-info mb-3">
+                                            <p><strong>Transaction Verification</strong></p>
+                                            <p>To verify your donation:</p>
+                                            <ol>
+                                                <li>Open your wallet and find this transaction</li>
+                                                <li>Copy the transaction ID (hash)</li>
+                                                <li>Paste it below and click "Verify Transaction"</li>
+                                            </ol>
+                                        </div>
                                     <div class="mb-3">
                                         <label for="tx-hash" class="form-label">Transaction Hash</label>
-                                        <input type="text" class="form-control" id="tx-hash" placeholder="Enter the transaction hash after sending ADA">
+                                            <input type="text" class="form-control" id="tx-hash" placeholder="Enter the transaction hash from your wallet">
+                                        </div>
+                                        <button class="btn btn-primary" onclick="verifyTransaction()">Verify Transaction</button>
                                     </div>
-                                    <button class="btn btn-primary" onclick="verifyTransaction()">Verify Transaction</button>
+                                    <div id="wallet-signing">
+                                        <button id="sign-with-wallet" class="btn btn-success" onclick="signWithWallet()">Sign with Wallet</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -241,18 +256,130 @@
                     });
             }
             
-            function verifyTransaction() {
-                const txHash = document.getElementById('tx-hash').value;
+            // Global variable to store transaction CBOR hex
+            let transactionCborHex = '';
+            let walletApi = null;
+
+            // Function to sign and submit the transaction with wallet
+            async function signWithWallet() {
+                const donationData = JSON.parse(localStorage.getItem('donation_tx_data'));
                 
-                if (!txHash) {
-                    showNotification('error', 'Missing Information', 'Please enter a transaction hash');
+                if (!donationData) {
+                    showNotification('error', 'Error', 'No donation data found');
                     return;
                 }
                 
-                const donationData = JSON.parse(localStorage.getItem('donation_tx_data'));
+                const statusDiv = document.getElementById('transaction-status');
+                statusDiv.innerHTML = '<div class="alert alert-info">Connecting to wallet...</div>';
                 
-                // Verify the transaction
-                fetch('/api/verify_transaction', {
+                try {
+                    // Check for wallet provider
+                    if (!window.cardano) {
+                        throw new Error("No Cardano wallet provider found. Please install a wallet extension like Eternl, Nami, or Flint.");
+                    }
+                    
+                    // Determine which wallet to use based on what's available
+                    let walletKey = null;
+                    if (window.cardano.eternl) {
+                        walletKey = 'eternl';
+                    } else if (window.cardano.nami) {
+                        walletKey = 'nami';
+                    } else if (window.cardano.flint) {
+                        walletKey = 'flint';
+                    }
+                    
+                    if (!walletKey) {
+                        throw new Error("No compatible wallet found. Please install Eternl, Nami, or Flint wallet.");
+                    }
+                    
+                    // Request access to the wallet
+                    walletApi = await window.cardano[walletKey].enable();
+                    statusDiv.innerHTML = '<div class="alert alert-info">Building transaction...</div>';
+                    
+                    // Build the transaction
+                    const response = await fetch('/build_tx', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            amount: donationData.amount,
+                            campaign_id: donationData.campaign_id
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    transactionCborHex = data.cbor_hex;
+                    
+                    // Show user need to confirm in wallet
+                    statusDiv.innerHTML = `<div class="alert alert-warning">
+                        <p><strong>Wallet Confirmation Required</strong></p>
+                        <p>Please open your wallet and confirm the transaction to complete your donation.</p>
+                        <p>After confirming in your wallet, the transaction will be sent to the blockchain.</p>
+                    </div>`;
+                    
+                    try {
+                        // Sign the transaction using the wallet
+                        const signedTx = await walletApi.signTx(transactionCborHex, true);
+                        
+                        // Submit the transaction
+                        const txHash = await walletApi.submitTx(signedTx);
+                        
+                        // Update the UI with success
+                        statusDiv.innerHTML = `<div class="alert alert-success">
+                            <p>Transaction submitted successfully!</p>
+                            <p class="mb-0">Transaction hash: ${txHash}</p>
+                        </div>`;
+                        
+                        // Verify the transaction automatically
+                        await verifyTransactionWithHash(txHash, donationData);
+                        
+                    } catch (error) {
+                        console.error('Wallet operation error:', error);
+                        
+                        // If the error occurs during submitTx and seems like the user confirmed in their wallet
+                        if (error.message && (error.message.includes("submitTx") || error.message.includes("unknown error"))) {
+                            statusDiv.innerHTML = `<div class="alert alert-warning">
+                                <p><strong>Confirm Transaction in Wallet</strong></p>
+                                <p>Please confirm the transaction in your wallet.</p>
+                                <p>The system will automatically detect and verify the transaction after completion.</p>
+                            </div>`;
+                            
+                            // Start monitoring for transactions
+                            startTransactionMonitoring(donationData);
+                            
+                            // Show manual verification as backup
+                            document.getElementById('manual-verification').style.display = 'block';
+                            
+                            // Hide the sign with wallet button
+                            document.getElementById('sign-with-wallet').style.display = 'none';
+                        } else {
+                            statusDiv.innerHTML = `<div class="alert alert-danger">
+                                <p>Error: ${error.message}</p>
+                                <p>Please try again or use manual verification.</p>
+                            </div>`;
+                            document.getElementById('manual-verification').style.display = 'block';
+                        }
+                    }
+                    
+                } catch (error) {
+                    console.error('Build transaction error:', error);
+                    statusDiv.innerHTML = `<div class="alert alert-danger">
+                        <p>Error: ${error.message}</p>
+                        <p>Please try again or use manual verification.</p>
+                    </div>`;
+                    document.getElementById('manual-verification').style.display = 'block';
+                }
+            }
+            
+            // Function to verify transaction with hash
+            async function verifyTransactionWithHash(txHash, donationData) {
+                try {
+                    const response = await fetch('/api/verify_transaction', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -263,9 +390,9 @@
                         campaign_id: donationData.campaign_id,
                         donor_address: donationData.donor_address
                     })
-                })
-                .then(response => response.json())
-                .then(data => {
+                    });
+                    
+                    const data = await response.json();
                     if (data.success) {
                         showNotification('success', 'Donation Verified', 'Your donation has been verified successfully!');
                         // Remove the donation data from localStorage
@@ -275,13 +402,13 @@
                             window.location.href = `/campaign/${donationData.campaign_id}`;
                         }, 2000);
                     } else {
-                        showNotification('error', 'Verification Failed', data.message || 'Error verifying donation');
+                        throw new Error(data.message || 'Error verifying donation');
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showNotification('error', 'Verification Error', error.message || 'Error verifying donation');
-                });
+                } catch (error) {
+                    console.error('Verification Error:', error);
+                    showNotification('error', 'Verification Error', 'Automatic verification failed. Please use the manual verification below.');
+                    document.getElementById('manual-verification').style.display = 'block';
+                }
             }
             
             function loadTransactionHistory() {
@@ -407,6 +534,271 @@
                         notification.remove();
                     }, 300);
                 }, 5000);
+            }
+
+            // Update this function for manual verification with better status messages
+            function verifyTransaction() {
+                const txHash = document.getElementById('tx-hash').value;
+                
+                if (!txHash) {
+                    showNotification('error', 'Missing Information', 'Please enter a transaction hash');
+                    return;
+                }
+                
+                const donationData = JSON.parse(localStorage.getItem('donation_tx_data'));
+                const statusDiv = document.getElementById('transaction-status');
+                statusDiv.innerHTML = '<div class="alert alert-info">Verifying transaction...</div>';
+                
+                // Verify the transaction
+                fetch('/api/verify_transaction', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tx_hash: txHash,
+                        amount: donationData.amount,
+                        campaign_id: donationData.campaign_id,
+                        donor_address: donationData.donor_address
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        statusDiv.innerHTML = `<div class="alert alert-success">
+                            <p><strong>Donation Verified Successfully!</strong></p>
+                            <p>Thank you for your donation of ${(donationData.amount / 1000000).toFixed(2)} ADA.</p>
+                            <p>Transaction ID: ${txHash.substring(0, 10)}...${txHash.substring(txHash.length - 10)}</p>
+                        </div>`;
+                        
+                        showNotification('success', 'Donation Verified', 'Your donation has been verified successfully!');
+                        
+                        // Remove the donation data from localStorage
+                        localStorage.removeItem('donation_tx_data');
+                        
+                        // Hide manual verification section
+                        document.getElementById('manual-verification').style.display = 'none';
+                        
+                        // Redirect to the campaign page after 3 seconds
+                        setTimeout(() => {
+                            window.location.href = `/campaign/${donationData.campaign_id}`;
+                        }, 3000);
+                    } else {
+                        statusDiv.innerHTML = `<div class="alert alert-danger">
+                            <p><strong>Verification Failed</strong></p>
+                            <p>${data.message || 'Error verifying donation'}</p>
+                            <p>Please check that you entered the correct transaction hash.</p>
+                        </div>`;
+                        showNotification('error', 'Verification Failed', data.message || 'Error verifying donation');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    statusDiv.innerHTML = `<div class="alert alert-danger">
+                        <p><strong>Verification Error</strong></p>
+                        <p>${error.message || 'Error connecting to verification service'}</p>
+                        <p>Please try again in a few moments.</p>
+                    </div>`;
+                    showNotification('error', 'Verification Error', error.message || 'Error verifying donation');
+                });
+            }
+
+            // Thêm các hàm tự động kiểm tra và cập nhật giao dịch
+            // Biến để theo dõi quá trình giám sát
+            let monitoringInterval = null;
+            let monitoringAttempts = 0;
+            const MAX_MONITORING_ATTEMPTS = 20; // ~ 2 phút (6s x 20)
+
+            // Start monitoring for new transactions
+            function startTransactionMonitoring(donationData) {
+                const statusDiv = document.getElementById('transaction-status');
+                statusDiv.innerHTML = `<div class="alert alert-warning mb-3">
+                    <p><strong>Confirm Transaction in Wallet</strong></p>
+                    <p>Please confirm the transaction in your wallet.</p>
+                    <p>The system will automatically detect and verify the transaction after completion.</p>
+                </div>
+                <div class="mt-3">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="spinner-border spinner-border-sm me-2" role="status">
+                            <span class="visually-hidden">Checking transaction...</span>
+                        </div>
+                        <span>Looking for your transaction... Please confirm in your wallet.</span>
+                    </div>
+                    <div class="progress" role="progressbar">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: 5%"></div>
+                    </div>
+                </div>`;
+                
+                // Cancel any existing monitoring
+                if (monitoringInterval) {
+                    clearInterval(monitoringInterval);
+                }
+                
+                monitoringAttempts = 0;
+                
+                // Start checking every 6 seconds
+                monitoringInterval = setInterval(() => {
+                    checkForNewTransactions(donationData);
+                }, 6000);
+            }
+
+            // Kiểm tra giao dịch mới
+            async function checkForNewTransactions(donationData) {
+                monitoringAttempts++;
+                
+                try {
+                    // Get the user address from localStorage
+                    const userAddress = localStorage.getItem('sender_address');
+                    if (!userAddress) {
+                        console.error('User wallet address not found');
+                        stopMonitoring();
+                        return;
+                    }
+                    
+                    const statusDiv = document.getElementById('transaction-status');
+                    
+                    // Update the monitoring progress indicator
+                    const progressPercent = Math.min((monitoringAttempts / MAX_MONITORING_ATTEMPTS) * 100, 100);
+                    statusDiv.innerHTML = `<div class="alert alert-warning mb-3">
+                        <p><strong>Confirm Transaction in Wallet</strong></p>
+                        <p>Please confirm the transaction in your wallet.</p>
+                        <p>The system will automatically detect and verify the transaction after completion.</p>
+                    </div>
+                    <div class="mt-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="spinner-border spinner-border-sm me-2" role="status">
+                                <span class="visually-hidden">Checking transaction...</span>
+                            </div>
+                            <span>Looking for your transaction... Attempt ${monitoringAttempts}/${MAX_MONITORING_ATTEMPTS}</span>
+                        </div>
+                        <div class="progress" role="progressbar">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: ${progressPercent}%"></div>
+                        </div>
+                    </div>`;
+                    
+                    // Try two approaches to verify the transaction
+                    
+                    // 1. First check if it's already in our database
+                    const dbResponse = await fetch(`/api/donations/user/${userAddress}`);
+                    const transactions = await dbResponse.json();
+                    
+                    // Find recent transactions in the last 5 minutes for this campaign
+                    const recentTime = new Date();
+                    recentTime.setMinutes(recentTime.getMinutes() - 5);
+                    
+                    const recentTransactions = transactions.filter(tx => {
+                        const txTime = new Date(tx.created_at);
+                        return txTime > recentTime && tx.campaign_id == donationData.campaign_id;
+                    });
+                    
+                    if (recentTransactions.length > 0) {
+                        // Transaction found in database!
+                        transactionDetected(recentTransactions[0], donationData);
+                        return;
+                    }
+                    
+                    // 2. If not found in database yet, try to manually verify from the campaign wallet
+                    if (monitoringAttempts % 2 === 0) { // Only check every other attempt to reduce load
+                        try {
+                            // Get the campaign details to find recipient address
+                            const campaignResponse = await fetch(`/api/campaigns/${donationData.campaign_id}`);
+                            const campaign = await campaignResponse.json();
+                            
+                            // Try to manually verify this transaction
+                            const verificationData = {
+                                donor_address: userAddress,
+                                campaign_id: donationData.campaign_id,
+                                amount: donationData.amount,
+                                // We don't have a tx hash yet, but will check based on other parameters
+                                check_recent: true
+                            };
+                            
+                            // Call the special verification endpoint that can check by parameters
+                            const verifyResponse = await fetch('/api/check_recent_transaction', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(verificationData)
+                            });
+                            
+                            const verifyResult = await verifyResponse.json();
+                            if (verifyResult.success) {
+                                // We found a matching transaction!
+                                transactionDetected({
+                                    transaction_id: verifyResult.tx_hash,
+                                    amount: donationData.amount,
+                                    campaign_id: donationData.campaign_id
+                                }, donationData);
+                                return;
+                            }
+                        } catch (verifyError) {
+                            console.log("Error in direct verification:", verifyError);
+                            // Continue with monitoring, don't stop on this error
+                        }
+                    }
+                    
+                    // If we've reached the maximum attempts, show manual verification option
+                    if (monitoringAttempts >= MAX_MONITORING_ATTEMPTS) {
+                        statusDiv.innerHTML = `<div class="alert alert-info">
+                            <p><strong>Could not automatically find transaction</strong></p>
+                            <p>The transaction may still be processing on the blockchain.</p>
+                            <p>Please check your wallet and enter the transaction ID below to verify your donation:</p>
+                        </div>`;
+                        stopMonitoring();
+                        
+                        // Make the manual verification more prominent
+                        document.getElementById('manual-verification').style.display = 'block';
+                        document.getElementById('manual-verification').scrollIntoView({ behavior: 'smooth' });
+                    }
+                } catch (error) {
+                    console.error('Error checking for transactions:', error);
+                    const statusDiv = document.getElementById('transaction-status');
+                    
+                    // Don't show error to user unless we've tried multiple times
+                    if (monitoringAttempts >= MAX_MONITORING_ATTEMPTS) {
+                        statusDiv.innerHTML = `<div class="alert alert-warning">
+                            <p><strong>Could not automatically verify transaction</strong></p>
+                            <p>Please manually enter your transaction ID below when it appears in your wallet.</p>
+                        </div>`;
+                        stopMonitoring();
+                    }
+                }
+            }
+
+            // Function to handle when a transaction is detected
+            function transactionDetected(transaction, donationData) {
+                const statusDiv = document.getElementById('transaction-status');
+                statusDiv.innerHTML = `<div class="alert alert-success">
+                    <p><strong>Transaction Detected!</strong></p>
+                    <p>Thank you for your donation of ${(donationData.amount / 1000000).toFixed(2)} ADA.</p>
+                    <p>Transaction ID: ${transaction.transaction_id.substring(0, 10)}...${transaction.transaction_id.substring(transaction.transaction_id.length - 10)}</p>
+                </div>`;
+                
+                // Show success notification
+                showNotification('success', 'Transaction Verified', 'Your donation has been verified successfully!');
+                
+                // Remove donation data from localStorage
+                localStorage.removeItem('donation_tx_data');
+                
+                // Hide manual verification section
+                document.getElementById('manual-verification').style.display = 'none';
+                
+                // Stop monitoring
+                stopMonitoring();
+                
+                // Redirect to campaign page after 3 seconds
+                setTimeout(() => {
+                    window.location.href = `/campaign/${donationData.campaign_id}`;
+                }, 3000);
+            }
+
+            // Stop monitoring
+            function stopMonitoring() {
+                if (monitoringInterval) {
+                    clearInterval(monitoringInterval);
+                    monitoringInterval = null;
+                }
             }
         </script>
     </body>

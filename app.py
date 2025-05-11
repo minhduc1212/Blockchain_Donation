@@ -674,6 +674,99 @@ def get_wallet_info():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Add this new route for checking recent transactions
+@app.route("/api/check_recent_transaction", methods=["POST"])
+def check_recent_transaction():
+    try:
+        data = request.get_json()
+        donor_address = data.get("donor_address")
+        campaign_id = data.get("campaign_id")
+        amount = int(data.get("amount", 0))
+        
+        # Get the campaign to find the recipient address
+        campaign = Campaign.query.get(campaign_id)
+        if not campaign:
+            return jsonify({"success": False, "message": "Campaign not found"}), 404
+        
+        # Validate addresses
+        if not validate_address(donor_address):
+            return jsonify({"success": False, "message": "Invalid donor address format"}), 400
+        
+        # Get recent blockchain transactions from BlockFrost
+        api_url = f"{NETWORK}v0/addresses/{donor_address}/transactions?order=desc"
+        headers = {"project_id": BLOCKFROST_PROJECT_ID}
+        
+        try:
+            response = requests.get(api_url, headers=headers)
+            response.raise_for_status()
+            
+            # Get the recent transactions (limit to checking the last 5)
+            recent_txs = response.json()[:5]
+            
+            # Check each transaction for a match
+            for tx in recent_txs:
+                tx_id = tx.get("tx_hash")
+                
+                # Get transaction details
+                tx_url = f"{NETWORK}v0/txs/{tx_id}/utxos"
+                tx_response = requests.get(tx_url, headers=headers)
+                tx_response.raise_for_status()
+                tx_details = tx_response.json()
+                
+                # Check outputs to see if any match our campaign address and amount
+                for output in tx_details.get("outputs", []):
+                    # Check if the address matches the campaign wallet and amount matches what we expect
+                    if output.get("address") == campaign.wallet_address:
+                        # Check amount
+                        for amount_item in output.get("amount", []):
+                            if amount_item.get("unit") == "lovelace" and int(amount_item.get("quantity", 0)) == amount:
+                                # Check if this transaction is already recorded
+                                existing_donation = Donation.query.filter_by(transaction_id=tx_id).first()
+                                if existing_donation:
+                                    return jsonify({
+                                        "success": True, 
+                                        "message": "Transaction already recorded",
+                                        "tx_hash": tx_id,
+                                        "donation": existing_donation.to_dict()
+                                    })
+                                
+                                # Record new donation
+                                donation = Donation(
+                                    amount=amount,
+                                    donor_address=donor_address,
+                                    transaction_id=tx_id,
+                                    campaign_id=campaign_id
+                                )
+                                
+                                # Update campaign amount
+                                campaign.current_amount += amount
+                                
+                                # Save to database
+                                db.session.add(donation)
+                                db.session.commit()
+                                
+                                return jsonify({
+                                    "success": True, 
+                                    "message": "Transaction verified",
+                                    "tx_hash": tx_id,
+                                    "donation": donation.to_dict()
+                                })
+            
+            # No matching transaction found
+            return jsonify({"success": False, "message": "No matching transaction found"}), 404
+                                
+        except requests.exceptions.RequestException as e:
+            return jsonify({
+                "success": False,
+                "message": f"Error checking blockchain: {str(e)}"
+            }), 500
+    except Exception as e:
+        print(f"Error checking recent transaction: {e}")
+        return jsonify({
+            "success": False,
+            "message": f"Error: {str(e)}"
+        }), 500
+
 if __name__ == "__main__":
     create_tables()
     app.run(debug=True)

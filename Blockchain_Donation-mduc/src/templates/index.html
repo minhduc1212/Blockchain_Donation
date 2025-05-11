@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Wallet and Build Transaction</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        button { padding: 10px 15px; font-size: 1em; cursor: pointer; }
+        #status { margin-top: 15px; font-weight: bold; }
+        #unusedAddress, #transactionResult { margin-top: 10px; background-color: #f0f0f0; padding: 15px; border-radius: 5px; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Connect Wallet and Build Transaction</h1>
+
+    <!-- Connect Wallet Section -->
+    <h2>Connect Wallet and Get Unused Address</h2>
+    <button id="connectWalletButton">Connect Wallet</button>
+    <div id="status">Status: Not Connected</div>
+    <div id="unusedAddress" style="display: none;">
+        <h3>Unused Address:</h3>
+        <pre id="unusedAddressDisplay"></pre>
+    </div>
+
+    <!-- Build Transaction Section -->
+    <h2>Build Transaction</h2>
+    <form id="buildTransactionForm">
+        <label for="amount">Enter Amount to Send (in Lovelace):</label><br>
+        <input type="number" id="amount" name="amount" step="1" min="1" required><br><br>
+        <button type="button" id="buildTransactionButton">Build Transaction</button>
+    </form>
+    <div id="transactionResult" style="display: none;">
+        <h3>Transaction CBOR Hex:</h3>
+        <pre id="transactionCborHex"></pre>
+        <button type="button" id="signAndSubmitButton">Sign and Submit Transaction</button>
+    </div>
+
+    <script>
+        const connectWalletButton = document.getElementById('connectWalletButton');
+        const statusDiv = document.getElementById('status');
+        const unusedAddressDiv = document.getElementById('unusedAddress');
+        const unusedAddressDisplay = document.getElementById('unusedAddressDisplay');
+        const buildTransactionButton = document.getElementById('buildTransactionButton');
+        const transactionResultDiv = document.getElementById('transactionResult');
+        const transactionCborHex = document.getElementById('transactionCborHex');
+        const signAndSubmitButton = document.getElementById('signAndSubmitButton');
+
+        let walletApi = null; // Store the wallet API instance
+
+        // Helper function to display status messages
+        function showStatus(message, isError = false) {
+            statusDiv.textContent = `Status: ${message}`;
+            statusDiv.className = isError ? 'error' : 'success';
+        }
+
+        // Connect Wallet and Fetch Unused Address
+        connectWalletButton.addEventListener('click', async () => {
+            showStatus('Checking for Cardano wallet...');
+            unusedAddressDiv.style.display = 'none'; // Hide previous results
+
+            // Check if a Cardano wallet is injected
+            if (typeof window.cardano === 'undefined') {
+                showStatus('Cardano wallet extension not found. Please install Eternl or another CIP-30 wallet.', true);
+                return;
+            }
+
+            // Check if Eternl wallet is available
+            const walletKey = 'eternl';
+            if (typeof window.cardano[walletKey] === 'undefined') {
+                showStatus(`${walletKey.charAt(0).toUpperCase() + walletKey.slice(1)} wallet not found.`, true);
+                return;
+            }
+
+            showStatus(`${walletKey.charAt(0).toUpperCase() + walletKey.slice(1)} wallet found. Requesting connection...`);
+
+            try {
+                // Request access from the user
+                walletApi = await window.cardano[walletKey].enable();
+
+                showStatus(`Connected to ${walletKey.charAt(0).toUpperCase() + walletKey.slice(1)}! Fetching unused address...`);
+
+                // Fetch unused addresses (CBOR hex format)
+                const unusedAddresses = await walletApi.getUnusedAddresses();
+
+                if (unusedAddresses.length === 0) {
+                    showStatus('No unused addresses found.', true);
+                    return;
+                }
+
+                const unusedAddress = unusedAddresses[0]; // Use the first unused address
+                unusedAddressDisplay.textContent = unusedAddress;
+                unusedAddressDiv.style.display = 'block';
+
+                // Send the unused address to the backend
+                const response = await fetch('/set_unused_address', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cbor_hex_address: unusedAddress })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    showStatus(`Sender Address: ${result.sender_address}`, false);
+                } else {
+                    showStatus(`Error: ${result.error}`, true);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+                console.error(error);
+            }
+        });
+
+        // Build Transaction
+        buildTransactionButton.addEventListener('click', async () => {
+            const amountInput = document.getElementById('amount').value;
+            if (!amountInput || isNaN(amountInput) || amountInput <= 0) {
+                alert('Please enter a valid amount in Lovelace.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/build_tx', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: parseInt(amountInput) })
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    transactionCborHex.textContent = result.cbor_hex;
+                    transactionResultDiv.style.display = 'block';
+                    showStatus('Transaction built successfully!', false);
+                } else {
+                    showStatus(`Error: ${result.error}`, true);
+                }
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+                console.error(error);
+            }
+        });
+
+        // Sign and Submit Transaction
+        signAndSubmitButton.addEventListener('click', async () => {
+            const rawCborHex = transactionCborHex.textContent;
+            if (!rawCborHex) {
+                alert('No transaction CBOR hex found. Please build a transaction first.');
+                return;
+            }
+
+            try {
+                // Sign the transaction using the wallet
+                console.log("Cbor hex: ", rawCborHex);
+                const signedTx = await walletApi.signTx(rawCborHex, true);
+                console.log('Transaction signed successfully! Submitting...');
+                console.log('Signed Transaction:', signedTx);
+
+                // Submit the signed transaction
+                const txHash = await walletApi.submitTx("signedTx");
+                //showStatus(`Transaction submitted successfully! Tx Hash: ${txHash}`, false);
+                //lert(`Transaction submitted successfully!\nTx Hash: ${txHash}`);
+            } catch (error) {
+                showStatus(`Error: ${error.message}`, true);
+                console.error(error);
+            }
+        });
+    </script>
+</body>
+</html>

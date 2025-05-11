@@ -37,7 +37,7 @@ class Campaign(db.Model):
             'goal_amount': self.goal_amount,
             'current_amount': self.current_amount,
             'wallet_address': self.wallet_address,
-            'image_url': self.image_url,
+            'image_url': self.image_url if self.image_url else "/static/assets/images/default_campaign.gif",
             'created_at': self.created_at.isoformat(),
             'end_date': self.end_date.isoformat() if self.end_date else None,
             'creator': self.creator.wallet_address
